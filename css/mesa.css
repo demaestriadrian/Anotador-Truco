@@ -1,8 +1,0 @@
-.mesa {
-  width: 100%;
-  height: 100vh;
-  background: url(../img/tela.jpg);
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-}
