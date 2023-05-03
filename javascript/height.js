@@ -1,4 +1,4 @@
-
+import Fosforo from "./fosforo.class.js";
 
 const ajustarHeight = () =>{
     const body = document.querySelector('body')
@@ -6,6 +6,7 @@ const ajustarHeight = () =>{
     console.log('resize');
 }
 
-ajustarHeight()
-
-window.addEventListener('resize',ajustarHeight)
+less.pageLoadFinished.then(()=>{
+    ajustarHeight()
+    window.addEventListener('resize',ajustarHeight)
+})
