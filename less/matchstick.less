@@ -1,6 +1,4 @@
-
-
-.fosforo{
+.matchstick{
     display: block;
     position: absolute;
     filter: drop-shadow(1vh 1vh .5vh rgba(0, 0, 0, 0.7));
@@ -13,13 +11,19 @@
     
 }
 
+.matchstickPosition{
+    display: block;
+    position: absolute;
+    background: #05bedb5a;
+    height: 75%;
+}
 
-.containerFosforo {
+.containerMatchstick {
     width: 80%;
     aspect-ratio: 1;
     // background-color: rgba(255, 228, 196, 0.692); 
     position: relative;
-    picture {
+    .matchstickPosition {
         display: block;
         position: absolute;
         filter: drop-shadow(1vh 1vh .5vh rgba(0, 0, 0, 0.7));
@@ -30,14 +34,14 @@
             height: 100%;
         }
     }
-    picture:nth-child(1){
+    .matchstickPosition:nth-child(1){
         top: 50%;
         img{
             top: -50%;
         }
     }
 
-    picture:nth-child(2){
+    .matchstickPosition:nth-child(2){
         left: 50%;
         img{
             position: relative;
@@ -47,7 +51,7 @@
         }
     }
 
-    picture:nth-child(3){
+    .matchstickPosition:nth-child(3){
         right: 0;
         top: 50%;
         img{
@@ -56,7 +60,7 @@
         }
     }
     
-    picture:nth-child(4){
+    .matchstickPosition:nth-child(4){
         right: 50%;
         bottom: 0;
         img{
@@ -68,7 +72,7 @@
 
     }
 
-    picture:nth-child(5){
+    .matchstickPosition:nth-child(5){
         top: 50%;
         left: 50%;
         img{
