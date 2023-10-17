@@ -1,9 +1,14 @@
-{
+{   
+    "liveServer.settings.port": 5501,
+    "javascript.preferences.importModuleSpecifierEnding": "js",
     "cSpell.words": [
         "almacen",
         "fosforos",
         "Fosforos",
+        "posicion",
         "seccion",
-        "separacion"
-    ]
+        "separacion",
+        "Xmax",
+        "Ymax"
+    ],
 }
