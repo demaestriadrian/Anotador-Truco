@@ -1,106 +1,13 @@
-<!DOCTYPE html>
-<html lang="es">
-
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet/less" type="text/css" href="less/index.less" />
-    <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
-    <title>Anotador de Truco</title>
-
-    <script defer src="https://cdn.jsdelivr.net/npm/less"></script>
-    <script defer src="javascript/app/app.mjs" type="module"></script>
-</head>
-
-<body>
-    <main class="table">
-        <div class="scorekeeper">
-            <div class="score"></div>
-            <div id="separator-h"></div>
-            <div class="points">
-                <section>
-                    <div class="containerMatchstick" id="a1">
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                    </div>
-                    <div class="containerMatchstick" id="a2">
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                    </div>
-                    <div class="containerMatchstick" id="a3">
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                    </div>
-                </section>
-                <div id="separator-v"></div>
-                <section>
-                    <div class="containerMatchstick" id="b1">
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                    </div>
-                    <div class="containerMatchstick" id="b2">
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                    </div>
-                    <div class="containerMatchstick" id="b3">
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                        <div class="matchstickPosition"></div>
-                    </div>
-                </section>
-            </div>
-            <div class="matchstickStorage">
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-                <picture class="matchstick"><img src="/img/matchstick2.png" alt="matchstick"></picture>
-            </div>
-        </div>
-    </main>
-</body>
-
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
