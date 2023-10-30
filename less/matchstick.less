@@ -1,21 +1,21 @@
-.matchstick{
+.matchstick {
     display: block;
     position: absolute;
     filter: drop-shadow(1vh 1vh .5vh rgba(0, 0, 0, 0.7));
-    height: 75%;
+    height: 5px;
 
     img {
         position: relative;
         height: 100%;
     }
-    
 }
 
-.matchstickPosition{
+.matchstickPosition {
     display: block;
     position: absolute;
-    background: #05bedb5a;
+    background: black;
     height: 75%;
+    width: 10%;
 }
 
 .containerMatchstick {
@@ -23,63 +23,90 @@
     aspect-ratio: 1;
     // background-color: rgba(255, 228, 196, 0.692); 
     position: relative;
+
     .matchstickPosition {
         display: block;
         position: absolute;
-        filter: drop-shadow(1vh 1vh .5vh rgba(0, 0, 0, 0.7));
+        //filter: drop-shadow(1vh 1vh .5vh rgba(0, 0, 0, 0.7));
         height: 75%;
-
-        img {
-            position: relative;
-            height: 100%;
-        }
-    }
-    .matchstickPosition:nth-child(1){
-        top: 50%;
-        img{
-            top: -50%;
-        }
     }
 
-    .matchstickPosition:nth-child(2){
-        left: 50%;
-        img{
-            position: relative;
-            top: -42%;
-            left: -50%;
-            transform: rotate(90deg);
-        }
+    .matchstickPosition:nth-child(1) {
+        top: 12.5%;
     }
 
-    .matchstickPosition:nth-child(3){
+    .matchstickPosition:nth-child(2) {
+        top: -32.5%;
+        left: 45%;
+        transform: rotate(90deg);
+        
+    }
+
+    .matchstickPosition:nth-child(3) {
+        top: 12.5%;
         right: 0;
-        top: 50%;
-        img{
-            top: -50%;
-            transform: rotate(180deg);
-        }
-    }
-    
-    .matchstickPosition:nth-child(4){
-        right: 50%;
-        bottom: 0;
-        img{
-            position: relative;
-            bottom: -42%;
-            right: -50%;
-            transform: rotate(270deg);
-        }
-
+        transform: rotate(180deg);
     }
 
-    .matchstickPosition:nth-child(5){
-        top: 50%;
-        left: 50%;
-        img{
-            position: relative;
-            bottom: 50%;
-            right: 50%;
-            transform: rotate(45deg);
-        }
+    .matchstickPosition:nth-child(4) {
+        bottom: -32.5%;
+        left: 45%;
+        transform: rotate(270deg);
     }
+
+    .matchstickPosition:nth-child(5) {
+        top: 12.5%;
+        left: 45%;
+        transform: rotate(45deg);
+    }
+
+    // .matchstickPosition:nth-child(1){
+    //     top: 50%;
+    //     img{
+    //         top: -50%;
+    //     }
+    // }
+
+    // .matchstickPosition:nth-child(2){
+    //     left: 50%;
+    //     img{
+    //         position: relative;
+    //         top: -42%;
+    //         left: -50%;
+    //         transform: rotate(90deg);
+    //     }
+    // }
+
+    // .matchstickPosition:nth-child(3){
+    //     right: 0;
+    //     top: 50%;
+    //     img{
+    //         top: -50%;
+    //         transform: rotate(180deg);
+    //     }
+    // }
+
+    // .matchstickPosition:nth-child(4){
+    //     right: 50%;
+    //     bottom: 0;
+    //     img{
+    //         position: relative;
+    //         bottom: -42%;
+    //         right: -50%;
+    //         transform: rotate(270deg);
+    //     }
+
+    // }
+
+    // .matchstickPosition:nth-child(5){
+    //     top: 50%;
+    //     left: 50%;
+    //     img{
+    //         position: relative;
+    //         bottom: 50%;
+    //         right: 50%;
+    //         transform: rotate(45deg);
+    //     }
+    // }
+
 }
