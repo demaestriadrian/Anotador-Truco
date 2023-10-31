@@ -9,10 +9,14 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "standard": "^17.1.0",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
   },
   "dependencies": {
     "less": "^4.2.0"
+  },
+  "eslintConfig": {
+    "extends": "./node_modules/standard/eslintrc.json"
   }
 }

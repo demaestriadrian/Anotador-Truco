@@ -10,7 +10,7 @@ export default defineConfig({
         math: "always",
         relativeUrls: true,
         javascriptEnabled: true,
-        rootpath: "./src/view"
+        rootpath: "./public/less"
       },
     }
   }
