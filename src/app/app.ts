@@ -1,4 +1,4 @@
 import 'less'
-import { initController } from "../controller/index.ts";
+import { initController } from '../controller/index.ts'
 
-initController()
+await initController()
