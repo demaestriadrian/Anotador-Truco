@@ -1,6 +1,6 @@
 import { allMatchsticks, matchstickPositionElement, matchstickStorage } from './elements'
 
-export const sizeMatchstickStorage = (): void => {
+const sizeMatchstickStorage = (): void => {
   const mobileOS = ['ios', 'android']
   const userAgent = navigator.userAgent.toLowerCase()
 
@@ -10,6 +10,17 @@ export const sizeMatchstickStorage = (): void => {
   }
 }
 
-export const sizeMatchstick = (): void => {
-  allMatchsticks.forEach(matchstick => (matchstick.style.height = matchstickPositionElement.style.height))
+const sizeMatchstick = (): void => {
+  console.log(matchstickPositionElement.clientHeight + 'px')
+  Object.defineProperty(window, 'matchstickPositionElement', { value: matchstickPositionElement })
+  allMatchsticks.forEach(matchstick => (matchstick.style.height = matchstickPositionElement.clientHeight + 'px'))
 }
+
+const initSizes = (): void => {
+  console.log('initSizes')
+
+  sizeMatchstickStorage()
+  sizeMatchstick()
+}
+
+export default initSizes

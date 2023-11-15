@@ -1,7 +1,5 @@
 import { initView } from '../view/index.ts'
-// import less from 'less.js'
 
-export const initController = async () => {
-  // await less.pageLoadFinished
-  initView()  
+export const initController = async (): Promise<void> => {
+  await initView()
 }

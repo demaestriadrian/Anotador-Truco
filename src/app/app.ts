@@ -1,4 +1,6 @@
 import 'less'
 import { initController } from '../controller/index.ts'
 
-await initController()
+console.log('app')
+
+initController()

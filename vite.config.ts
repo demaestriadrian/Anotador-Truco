@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-
 export default defineConfig({
   server: {
     port: 5500
@@ -7,12 +6,10 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       less: {
-        math: "always",
+        math: 'always',
         relativeUrls: true,
-        javascriptEnabled: true,
-        rootpath: "./public/less"
-      },
+        javascriptEnabled: true
+      }
     }
   }
-
 })

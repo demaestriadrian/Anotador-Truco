@@ -1,6 +1,7 @@
-// import { sections } from "./elements.ts";
-import { sizeMatchstickStorage } from './sizes'
+import initSizes from './sizes'
+await import ('./less/index.less')
+// import less from 'less'
 
-export const initView = (): void => {
-  sizeMatchstickStorage()
+export const initView = async (): Promise<void> => {
+  initSizes()
 }
