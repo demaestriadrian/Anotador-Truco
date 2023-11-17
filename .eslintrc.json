@@ -10,6 +10,7 @@
         "sourceType": "module"
     },
     "rules": {
+        "no-multi-spaces":"warn",
         "arrow-spacing":"warn",
         "padded-blocks": "warn",
         "no-undef": "warn",
@@ -24,9 +25,14 @@
         "eol-last": "warn",
         "no-console": "warn",
         "quotes": "off",
+
+        // @typescript rules
         "@typescript-eslint/quotes": "warn",
         "@typescript-eslint/semi": "warn",
         "@typescript-eslint/comma-spacing": "warn",
-        "@typescript-eslint/object-curly-spacing": "warn"
+        "@typescript-eslint/object-curly-spacing": "warn",
+        "@typescript-eslint/key-spacing": "warn",
+        "@typescript-eslint/ban-types": "warn",
+        "@typescript-eslint/type-annotation-spacing": "warn"
     }
 }

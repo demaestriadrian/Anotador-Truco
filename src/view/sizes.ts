@@ -4,7 +4,7 @@ const sizeMatchstickStorage = (): void => {
   const mobileOS = ['ios', 'android']
   const userAgent = navigator.userAgent.toLowerCase()
 
-  if (mobileOS.some(os => userAgent.includes(os))) { matchstickStorage.style.flex = '5' }
+  if (mobileOS.some(os => userAgent.includes(os))) { matchstickStorage.style.flex = '2' }
 }
 
 const sizeMatchstick = (): void => {
