@@ -1,4 +1,4 @@
-import { allMatchsticks, matchstickStorage } from './elements'
+import { $allMatchsticks, $matchstickPositionElement, $matchstickStorage } from './elements'
 import { getRandomPositionToElement } from './util'
 import { type ConfigPosition, type Position } from './view'
 
@@ -15,9 +15,9 @@ export const getRandomPositionMatchticksStorage = (): Position => {
   // return { x, y }
 
   const configPosition: ConfigPosition = {
-    element: matchstickStorage,
+    element: $matchstickStorage,
     padding: {
-      // right: matchstickPositionElement.getBoundingClientRect().width * 40
+      right: $matchstickPositionElement.getBoundingClientRect().width * 40
     },
     trimHeight: {
       value: 3,
@@ -26,8 +26,8 @@ export const getRandomPositionMatchticksStorage = (): Position => {
     },
     trimWidth: {
       value: 2,
-      format: 'fr'
-      // aline: 'end'
+      format: 'fr',
+      aline: 'end'
     }
   }
 
@@ -35,7 +35,7 @@ export const getRandomPositionMatchticksStorage = (): Position => {
 }
 
 export const initialPositionsMatchsticks = (): void => {
-  allMatchsticks.forEach(matchstick => {
+  $allMatchsticks.forEach(matchstick => {
     const { x, y } = getRandomPositionMatchticksStorage()
     matchstick.style.top = `${y}px`
     matchstick.style.left = `${x}px`
