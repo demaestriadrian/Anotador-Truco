@@ -3,7 +3,6 @@ import initSizes from './sizes'
 import './css/index.css'
 import { gsap } from 'gsap'
 import MotionPathPlugin from 'gsap'
-import { $allMatchsticks } from './elements'
 import { initMatchsticksDraggables } from './draggable'
 
 gsap.registerPlugin(MotionPathPlugin)
