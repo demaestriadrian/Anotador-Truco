@@ -1,7 +1,7 @@
 .matchstick {
   display: hidden;
   position: absolute;
-  filter: drop-shadow(0.6vh 0.6vh .5vh rgba(0, 0, 0, .7));
+  filter: drop-shadow(0.6svh 0.6svh .5svh rgba(0, 0, 0, .7));
   height: 5px;
 
   img {
