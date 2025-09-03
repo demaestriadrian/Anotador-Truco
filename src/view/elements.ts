@@ -1,3 +1,5 @@
+import { MatchStick } from "./class/MatchStick"
+
 const [$sectionA, $sectionB] = document.getElementsByTagName('section')
 export const sections = { sectionA: $sectionA, sectionB: $sectionB }
 export const $allMatchsticks = [...document.querySelectorAll('.matchstick')].filter(e => e instanceof HTMLElement) as HTMLElement[]
@@ -8,3 +10,5 @@ const $matchsticksPositionsB = [...$sectionB.getElementsByClassName('matchstickP
 export const $matchsticksPositions = { matchsticksPositionsA: $matchsticksPositionsA, $matchsticksPositionsB }
 export const $matchstickPositionElement = $matchsticksPositionsA[0]
 export const $matchstickStorage = document.querySelector('.matchstickStorage') as HTMLElement
+
+export const allMatchsticks = [...document.querySelectorAll('.matchstick')].map(e => e instanceof HTMLElement && new MatchStick(e)).filter(e => e !== null) as MatchStick[]
