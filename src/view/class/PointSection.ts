@@ -22,6 +22,11 @@ class PointSection {
         $point.move(this.positions[this.points.length - 1] as HTMLElement);
     }
 
+    public get getElement(): HTMLElement | null {
+        return this.$container;
+    }
+
+    
 }
 
 export default PointSection;

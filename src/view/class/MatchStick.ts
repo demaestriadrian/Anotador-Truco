@@ -2,6 +2,7 @@ import { positionRandomX, positionRandomY } from "../util";
 import { $matchstickStorage } from "../elements";
 import { gsap } from 'gsap'
 import { Draggable, InertiaPlugin, MotionPathPlugin } from "gsap/all";
+import { sections } from "../elements";
 gsap.registerPlugin(Draggable, InertiaPlugin, MotionPathPlugin);
 
 class MatchStick extends Draggable {
@@ -11,7 +12,7 @@ class MatchStick extends Draggable {
     constructor(public $matchstick: HTMLElement) {
         super($matchstick);
         this.initSize();
-        this.initPosition();
+        this.initPosition(true);
         this.initDraggable();
     }
 
@@ -21,10 +22,10 @@ class MatchStick extends Draggable {
     }
 
     // Método para inicializar la posición del fósforo
-    initPosition(): void {
+    initPosition(set = false): void {
         const delta = this.getDelta($matchstickStorage, [.5, 0], [this.initX, this.initY]);
 
-        gsap.set(this.$matchstick, {
+        gsap[set ? "set" : "to"](this.$matchstick, {
             x: "+=" + delta.x,
             y: "+=" + delta.y
         });
@@ -60,7 +61,19 @@ class MatchStick extends Draggable {
         Draggable.create(this.$matchstick, {
             type: "x,y",
             bounds: "#referenceDrag",
-            inertia: true
+            // inertia: true,
+            onRelease: (event) => {
+                    if (Draggable.hitTest(this.$matchstick, sections.sectionA.getElement)) {
+                        sections.sectionA.addPoint(this);
+                        return
+                    }
+                    if (Draggable.hitTest(this.$matchstick, sections.sectionB.getElement)) {
+                        sections.sectionB.addPoint(this);
+                        return
+                    }
+                    console.log("No se ha soltado en una sección válida, volviendo a la posición inicial. ",this.initX,this.initY);
+                    this.initPosition();
+                }
         });
     }
 }

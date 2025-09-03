@@ -1,7 +1,8 @@
 import MatchStick from "./class/MatchStick"
+import PointSection from "./class/PointSection"
 
 const [$sectionA, $sectionB] = document.getElementsByTagName('section')
-export const sections = { sectionA: $sectionA, sectionB: $sectionB }
+export const sections = { sectionA: new PointSection($sectionA), sectionB: new PointSection($sectionB) }
 export const $allMatchsticks = [...document.querySelectorAll('.matchstick')].filter(e => e instanceof HTMLElement) as HTMLElement[]
 
 const $matchsticksPositionsA = [...$sectionA.getElementsByClassName('matchstickPosition')].filter(e => e instanceof HTMLElement) as HTMLElement[]
