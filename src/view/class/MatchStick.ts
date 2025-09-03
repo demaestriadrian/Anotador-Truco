@@ -15,10 +15,14 @@ class MatchStick extends Draggable {
         this.initDraggable();
     }
 
-    
+    initSize(): void {
+        const { width, height } = document.querySelector('.matchstickPosition')?.getBoundingClientRect() || {};
+        gsap.set(this.$matchstick, { width, height });
+    }
+
     // Método para inicializar la posición del fósforo
     initPosition(): void {
-        const delta = this.getDelta($matchstickStorage, [this.initX, this.initY]);
+        const delta = this.getDelta($matchstickStorage, [.5, 0], [this.initX, this.initY]);
 
         gsap.set(this.$matchstick, {
             x: "+=" + delta.x,
@@ -29,35 +33,36 @@ class MatchStick extends Draggable {
     // Método para mover el fósforo
     move($element: HTMLElement): void {
         const delta = this.getDelta($element);
-        gsap.to(this.$matchstick, { 
+        gsap.to(this.$matchstick, {
             x: "+=" + delta.x,
-            y: "+=" + delta.y
-         })
+            y: "+=" + delta.y,
+            rotation: gsap.getProperty($element, "rotation")
+        })
     }
 
-    private getDelta( $element: HTMLElement, position =[0,0]): gsap.Point2D {
+    private getDelta(
+        $element: HTMLElement,
+        positionThis = [.5, .5],
+        positionEl = [.5, .5]
+    ): gsap.Point2D {
 
         return MotionPathPlugin.getRelativePosition(
-              this.$matchstick,
-              $element,
-              [0, 0],
-              position
-            );
+            this.$matchstick,
+            $element,
+            positionThis,
+            positionEl
+        );
     }
 
-    initSize(): void {
-        const { width, height } = document.querySelector('.matchstickPosition')?.getBoundingClientRect() || {};
-        gsap.set(this.$matchstick, { width, height });
-    }
 
     private initDraggable = (): void => {
-       
-            Draggable.create(this.$matchstick, {
-                type: "x,y",
-                bounds: "#referenceDrag",
-                inertia: true
-            });
+
+        Draggable.create(this.$matchstick, {
+            type: "x,y",
+            bounds: "#referenceDrag",
+            inertia: true
+        });
     }
 }
 
-export { MatchStick }
+export default MatchStick;

@@ -1,4 +1,4 @@
-import { MatchStick } from "./class/MatchStick"
+import MatchStick from "./class/MatchStick"
 
 const [$sectionA, $sectionB] = document.getElementsByTagName('section')
 export const sections = { sectionA: $sectionA, sectionB: $sectionB }
