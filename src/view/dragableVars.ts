@@ -1,5 +1,5 @@
 import { Draggable } from "gsap/Draggable";
-import { sections } from "./elements";
+import { sections } from "@/view/elements";
 
 export const draggableVars: Draggable.Vars = {
     onDragEnd: (event) => {

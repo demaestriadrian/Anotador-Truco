@@ -1,5 +1,5 @@
-import MatchStick from "./class/MatchStick"
-import PointSection from "./class/PointSection"
+import MatchStick from "@/view/class/MatchStick"
+import PointSection from "@/view/class/PointSection"
 
 const [$sectionA, $sectionB] = document.getElementsByTagName('section')
 export const sections = { sectionA: new PointSection($sectionA), sectionB: new PointSection($sectionB) }

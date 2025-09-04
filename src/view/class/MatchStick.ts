@@ -1,8 +1,7 @@
-import { positionRandomX, positionRandomY } from "../util";
-import { $matchstickStorage } from "../elements";
+import { positionRandomX, positionRandomY } from "@/view/util";
+import { $matchstickStorage , sections  } from "@/view/elements";
 import { gsap } from 'gsap'
 import { Draggable, InertiaPlugin, MotionPathPlugin } from "gsap/all";
-import { sections } from "../elements";
 gsap.registerPlugin(Draggable, InertiaPlugin, MotionPathPlugin);
 
 class MatchStick extends Draggable {

@@ -1,4 +1,4 @@
-import MatchStick from "./MatchStick";
+import MatchStick from "@/view/class/MatchStick";
 
 class PointSection {
     private points: MatchStick[] = [];

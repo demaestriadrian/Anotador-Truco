@@ -1,4 +1,4 @@
-import { $matchstickStorage } from './elements'
+import { $matchstickStorage } from '@/view/elements'
 
 const sizeMatchstickStorage = (): void => {
   const mobileOS = ['ios', 'android']

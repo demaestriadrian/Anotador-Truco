@@ -1,5 +1,5 @@
-import initSizes from './sizes'
-import './css/index.css'
+import initSizes from '@/view/sizes'
+import '@/view/css/index.css'
 
 export const initView = async (): Promise<void> => {
   initSizes()
