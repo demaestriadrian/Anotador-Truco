@@ -13,13 +13,12 @@ class PointSection {
     }
 
     private createPositions(): void {
-        const pointElements = this.$container.querySelectorAll('.matchstickPosition');
-        pointElements.forEach(($positions) => this.positions.push($positions));
+        this.positions = [...this.$container.querySelectorAll('.matchstickPosition')];
     }
 
-    addPoint($point: MatchStick) {
-        this.points.push($point);
-        $point.move(this.positions[this.points.length - 1] as HTMLElement);
+    addPoint(point: MatchStick) {
+        this.points.includes(point) || this.points.push(point);
+        point.move(this.positions[this.points.indexOf(point)] as HTMLElement);
     }
 
     public get getElement(): HTMLElement | null {

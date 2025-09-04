@@ -27,7 +27,9 @@ class MatchStick extends Draggable {
 
         gsap[set ? "set" : "to"](this.$matchstick, {
             x: "+=" + delta.x,
-            y: "+=" + delta.y
+            y: "+=" + delta.y,
+            rotation: gsap.getProperty($matchstickStorage, "rotation")
+
         });
     }
 
