@@ -1,5 +1,5 @@
-import { initController } from '../controller/index.ts'
+import { bootstrap } from '@/infrastructure/bootstrap/index'
 
-console.log('app')
+console.log('App starting...')
 
-initController()
+bootstrap()

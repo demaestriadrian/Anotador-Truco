@@ -7,7 +7,7 @@ gsap.registerPlugin(Draggable, InertiaPlugin, MotionPathPlugin);
 class MatchStick extends Draggable {
     private initX = gsap.utils.interpolate(0, gsap.getProperty($matchstickStorage, "width"), positionRandomX());
     private initY = gsap.utils.interpolate(0, gsap.getProperty($matchstickStorage, "height"), positionRandomY());
-    
+
 
 
     constructor(public $matchstick: HTMLElement) {
@@ -68,10 +68,12 @@ class MatchStick extends Draggable {
                 console.log("Released ", event);
                 if (Draggable.hitTest(this.$matchstick, sections.sectionA.getElement)) {
                     sections.sectionA.addPoint(this);
+                    document.dispatchEvent(new CustomEvent('matchstick-dropped-a'));
                     return
                 }
                 if (Draggable.hitTest(this.$matchstick, sections.sectionB.getElement)) {
                     sections.sectionB.addPoint(this);
+                    document.dispatchEvent(new CustomEvent('matchstick-dropped-b'));
                     return
                 }
                 console.log("No se ha soltado en una sección válida, volviendo a la posición inicial. ", this.initX, this.initY);
