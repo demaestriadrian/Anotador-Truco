@@ -1,6 +1,6 @@
 import { GameService } from '../../core/application/services/GameService';
 import { ViewAdapter } from '../adapters/view/ViewAdapter';
-import { initView } from '@/view/index'; // The original view init
+import { initView } from '@/ui/index'; // The original view init
 
 export const bootstrap = async () => {
     // 1. Initialize the existing visual system

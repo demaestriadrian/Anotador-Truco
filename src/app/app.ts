@@ -1,4 +1,4 @@
-import { bootstrap } from '@/infrastructure/bootstrap/index'
+import { bootstrap } from '@/infrastructure/setup/index'
 
 console.log('App starting...')
 

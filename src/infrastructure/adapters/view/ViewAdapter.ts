@@ -1,6 +1,6 @@
 import { IGameView } from '../../../core/domain/ports/interfaces';
-import { sections, allMatchsticks, $matchstickStorage } from '@/view/elements';
-import MatchStick from '@/view/class/MatchStick';
+import { sections, allMatchsticks, $matchstickStorage } from '@/ui/elements';
+import MatchStick from '@/ui/components/MatchStick';
 // We might need to import GSAP-related stuff if we want to animate "programmatically" 
 // but MatchStick.move might handle it.
 

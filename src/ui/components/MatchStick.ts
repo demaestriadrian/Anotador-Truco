@@ -1,16 +1,24 @@
-import { positionRandomX, positionRandomY } from "@/view/util";
-import { $matchstickStorage, sections } from "@/view/elements";
+import { positionRandomX, positionRandomY } from "@/ui/utils";
+import { $matchstickStorage } from "@/ui/elements";
 import { gsap } from 'gsap'
 import { Draggable, InertiaPlugin, MotionPathPlugin } from "gsap/all";
+import PointSection from "@/ui/components/PointSection";
+
 gsap.registerPlugin(Draggable, InertiaPlugin, MotionPathPlugin);
+
+interface Sections {
+    sectionA: PointSection;
+    sectionB: PointSection;
+}
 
 class MatchStick extends Draggable {
     private initX = gsap.utils.interpolate(0, gsap.getProperty($matchstickStorage, "width"), positionRandomX());
     private initY = gsap.utils.interpolate(0, gsap.getProperty($matchstickStorage, "height"), positionRandomY());
 
-
-
-    constructor(public $matchstick: HTMLElement) {
+    constructor(
+        public $matchstick: HTMLElement,
+        private sections: Sections
+    ) {
         super($matchstick);
         this.initSize();
         this.initPosition(true);
@@ -24,8 +32,6 @@ class MatchStick extends Draggable {
 
     // Método para inicializar la posición del fósforo
     initPosition(set = false): void {
-        // const delta = this.getDelta($matchstickStorage, [.5, 0], [this.initX, this.initY]);
-
         gsap[set ? "set" : "to"](this.$matchstick, {
             x: this.initX,
             y: this.initY,
@@ -64,19 +70,19 @@ class MatchStick extends Draggable {
             type: "x,y",
             bounds: "#referenceDrag",
             // inertia: true,
-            onRelease: (event) => {
-                console.log("Released ", event);
-                if (Draggable.hitTest(this.$matchstick, sections.sectionA.getElement)) {
-                    sections.sectionA.addPoint(this);
+            onRelease: (_event) => {
+                // Se soltó el fósforo
+                if (Draggable.hitTest(this.$matchstick, this.sections.sectionA.getElement)) {
+                    this.sections.sectionA.addPoint(this);
                     document.dispatchEvent(new CustomEvent('matchstick-dropped-a'));
                     return
                 }
-                if (Draggable.hitTest(this.$matchstick, sections.sectionB.getElement)) {
-                    sections.sectionB.addPoint(this);
+                if (Draggable.hitTest(this.$matchstick, this.sections.sectionB.getElement)) {
+                    this.sections.sectionB.addPoint(this);
                     document.dispatchEvent(new CustomEvent('matchstick-dropped-b'));
                     return
                 }
-                console.log("No se ha soltado en una sección válida, volviendo a la posición inicial. ", this.initX, this.initY);
+                // No se ha soltado en una sección válida, volviendo a la posición inicial.
                 this.initPosition();
             }
         });

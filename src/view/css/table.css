@@ -1,8 +1,0 @@
-.table {
-  width: 100%;
-  height: 100%;
-  background-image: url(/img/baize.webp);
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-}

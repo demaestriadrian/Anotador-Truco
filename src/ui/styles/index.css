@@ -1,0 +1,38 @@
+@import url(./matchstick.css);
+@import url(./scorekeeper.css);
+@import url(./separator.css);
+@import url(./table.css);
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  width: 100svw;
+  height: 100svh;
+  background-color: #106138;
+}
+
+body {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#referenceDrag {
+  position: absolute;
+  top: 10svh;
+  left: 0;
+  width: 100svw;
+  height: 100svh;
+  background-color: red;
+  opacity: 0;
+  z-index: -1;
+}
+

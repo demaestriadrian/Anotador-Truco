@@ -1,0 +1,61 @@
+.matchstick {
+  display: hidden;
+  position: absolute;
+  filter: drop-shadow(0.6svh 0.6svh .5svh rgba(0, 0, 0, .7));
+  height: 5px;
+
+  img {
+    position: relative;
+    height: 100%;
+  }
+}
+
+.matchstickPosition {
+  display: block;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.414);
+  height: 75%;
+  width: 10%;
+  border-radius: 1rem;
+}
+
+.containerMatchstick {
+  width: 80%;
+  aspect-ratio: 1;
+  position: relative;
+
+  .matchstickPosition {
+    display: block;
+    position: absolute;
+    height: 75%;
+  }
+
+  .matchstickPosition:nth-child(1) {
+    top: 12.5%;
+  }
+
+  .matchstickPosition:nth-child(2) {
+    top: -32.5%;
+    left: 45%;
+    transform: rotate(90deg);
+
+  }
+
+  .matchstickPosition:nth-child(3) {
+    top: 12.5%;
+    right: 0;
+    transform: rotate(180deg);
+  }
+
+  .matchstickPosition:nth-child(4) {
+    bottom: -32.5%;
+    left: 45%;
+    transform: rotate(270deg);
+  }
+
+  .matchstickPosition:nth-child(5) {
+    top: 12.5%;
+    left: 45%;
+    transform: rotate(45deg);
+  }
+}

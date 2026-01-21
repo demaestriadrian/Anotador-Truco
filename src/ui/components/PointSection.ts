@@ -1,4 +1,4 @@
-import MatchStick from "@/view/class/MatchStick";
+import MatchStick from "@/ui/components/MatchStick";
 
 class PointSection {
     private points: MatchStick[] = [];
@@ -13,11 +13,14 @@ class PointSection {
     }
 
     private createPositions(): void {
+        // Obtener todas las posiciones de fósforos dentro del contenedor
         this.positions = [...this.$container.querySelectorAll('.matchstickPosition')];
     }
 
     addPoint(point: MatchStick) {
+        // Agregar punto si no existe ya
         this.points.includes(point) || this.points.push(point);
+        // Mover el fósforo a la posición correspondiente
         point.move(this.positions[this.points.indexOf(point)] as HTMLElement);
     }
 
@@ -42,6 +45,6 @@ class PointSection {
     public get getElement(): HTMLElement | null {
         return this.$container;
     }
-
+}
 
 export default PointSection;
