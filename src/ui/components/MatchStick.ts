@@ -1,25 +1,25 @@
 import { positionRandomX, positionRandomY } from "@/ui/utils";
-import { $matchstickStorage } from "@/ui/elements";
 import { gsap } from 'gsap'
 import { Draggable, InertiaPlugin, MotionPathPlugin } from "gsap/all";
-import PointSection from "@/ui/components/PointSection";
+import { gameStore } from '@/ui/store/useGameStore';
 
 gsap.registerPlugin(Draggable, InertiaPlugin, MotionPathPlugin);
 
-interface Sections {
-    sectionA: PointSection;
-    sectionB: PointSection;
-}
-
 class MatchStick extends Draggable {
-    private initX = gsap.utils.interpolate(0, gsap.getProperty($matchstickStorage, "width"), positionRandomX());
-    private initY = gsap.utils.interpolate(0, gsap.getProperty($matchstickStorage, "height"), positionRandomY());
+    private initX: number;
+    private initY: number;
 
     constructor(
         public $matchstick: HTMLElement,
-        private sections: Sections
+        private $matchstickStorage: HTMLElement,
+        private $sectionA: Element,
+        private $sectionB: Element
     ) {
         super($matchstick);
+
+        this.initX = gsap.utils.interpolate(0, gsap.getProperty(this.$matchstickStorage, "width"), positionRandomX());
+        this.initY = gsap.utils.interpolate(0, gsap.getProperty(this.$matchstickStorage, "height"), positionRandomY());
+
         this.initSize();
         this.initPosition(true);
         this.initDraggable();
@@ -72,14 +72,12 @@ class MatchStick extends Draggable {
             // inertia: true,
             onRelease: (_event) => {
                 // Se soltó el fósforo
-                if (Draggable.hitTest(this.$matchstick, this.sections.sectionA.getElement)) {
-                    this.sections.sectionA.addPoint(this);
-                    document.dispatchEvent(new CustomEvent('matchstick-dropped-a'));
+                if (Draggable.hitTest(this.$matchstick, this.$sectionA)) {
+                    gameStore.getState().addPoint('A', this)
                     return
                 }
-                if (Draggable.hitTest(this.$matchstick, this.sections.sectionB.getElement)) {
-                    this.sections.sectionB.addPoint(this);
-                    document.dispatchEvent(new CustomEvent('matchstick-dropped-b'));
+                if (Draggable.hitTest(this.$matchstick, this.$sectionB)) {
+                    gameStore.getState().addPoint('B', this)
                     return
                 }
                 // No se ha soltado en una sección válida, volviendo a la posición inicial.

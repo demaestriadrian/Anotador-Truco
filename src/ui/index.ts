@@ -1,10 +1,9 @@
-import initSizes from '@/ui/sizes'
 import '@/ui/styles/index.css'
-import { allMatchsticks } from '@/ui/elements'
+import { allMatchsticks, initElements } from '@/ui/elements'
 import gsap from 'gsap'
 
 export const initView = async (): Promise<void> => {
-  initSizes()
+  initElements();
   // initMatchsticksDraggables()
   // initialPositionsMatchsticks()
 
