@@ -1,54 +1,55 @@
-import { createStore } from 'zustand/vanilla'
-import MatchStick from '@/ui/components/MatchStick'
+import { create } from 'zustand'
+
+export interface MatchStickData {
+    id: string;
+    // Pdríamos guardar posición u otros metadatos aquí si fuera necesario
+}
 
 interface GameState {
     scoreA: number
     scoreB: number
-    matchesA: MatchStick[]
-    matchesB: MatchStick[]
-    addPoint: (team: 'A' | 'B', matchStick: MatchStick) => void
-    removeLastPoint: (team: 'A' | 'B') => MatchStick | undefined
+    matchesA: MatchStickData[]
+    matchesB: MatchStickData[]
+    addPoint: (team: 'A' | 'B') => void
+    removeLastPoint: (team: 'A' | 'B') => void
     reset: () => void
 }
 
-export const gameStore = createStore<GameState>((set, get) => ({
+export const useGameStore = create<GameState>((set) => ({
     scoreA: 0,
     scoreB: 0,
     matchesA: [],
     matchesB: [],
 
-    addPoint: (team, matchStick) => {
-        const keyScore = team === 'A' ? 'scoreA' : 'scoreB'
-        const keyMatches = team === 'A' ? 'matchesA' : 'matchesB'
+    addPoint: (team) => {
+        set((state) => {
+            const keyScore = team === 'A' ? 'scoreA' : 'scoreB';
+            const keyMatches = team === 'A' ? 'matchesA' : 'matchesB';
 
-        const currentMatches = get()[keyMatches]
-        // Evitar duplicados si ya está en la lista (aunque la UI debería prevenirlo)
-        if (currentMatches.includes(matchStick)) return
+            const newMatch: MatchStickData = { id: crypto.randomUUID() };
 
-        set((state) => ({
-            ...state,
-            [keyScore]: state[keyScore] + 1,
-            [keyMatches]: [...state[keyMatches], matchStick]
-        }))
+            return {
+                [keyScore]: state[keyScore] + 1,
+                [keyMatches]: [...state[keyMatches], newMatch]
+            };
+        });
     },
 
     removeLastPoint: (team) => {
-        const keyScore = team === 'A' ? 'scoreA' : 'scoreB'
-        const keyMatches = team === 'A' ? 'matchesA' : 'matchesB'
+        set((state) => {
+            const keyScore = team === 'A' ? 'scoreA' : 'scoreB';
+            const keyMatches = team === 'A' ? 'matchesA' : 'matchesB';
 
-        const currentMatches = get()[keyMatches]
-        if (currentMatches.length === 0) return undefined
+            if (state[keyMatches].length === 0) return {};
 
-        const newMatches = [...currentMatches]
-        const removedMatchStick = newMatches.pop()
+            const newMatches = [...state[keyMatches]];
+            newMatches.pop();
 
-        set((state) => ({
-            ...state,
-            [keyScore]: state[keyScore] - 1,
-            [keyMatches]: newMatches
-        }))
-
-        return removedMatchStick
+            return {
+                [keyScore]: Math.max(0, state[keyScore] - 1),
+                [keyMatches]: newMatches
+            };
+        });
     },
 
     reset: () => {
