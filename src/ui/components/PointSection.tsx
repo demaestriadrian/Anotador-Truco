@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useLayoutEffect } from 'react'
 import { useGameStore } from '@/ui/store/useGameStore'
 import MatchStick from './MatchStick'
 
@@ -8,16 +8,26 @@ interface PointSectionProps {
 
 const PointSection: React.FC<PointSectionProps> = ({ team }) => {
     const matches = useGameStore(state => team === 'A' ? state.matchesA : state.matchesB)
+    const setMatchstickSize = useGameStore(state => state.setMatchstickSize)
+    const slotRef = useRef<HTMLDivElement>(null)
 
-    // Necesitamos 3 contenedores de 5 (15puntos) o 6 contenedores?
-    // El diseño original tenia 3 ids: a1, a2, a3. Cada uno con 5 slots .matchstickPosition
+    useLayoutEffect(() => {
+        // Solo medir si somos el equipo A y el primer slot para evitar duplicidad
+        if (team !== 'A' || !slotRef.current) return
 
-    // Helpers para distribuir los hooks visuales
-    // Vamos a renderizar la estructura fija de los "huecos" y poner los MatchSticks encima si existen.
+        const updateSize = () => {
+            if (slotRef.current) {
+                const { width, height } = slotRef.current.getBoundingClientRect()
+                setMatchstickSize({ width, height })
+            }
+        }
 
-    // Estrategia: "Slots".
-    // TOTAL PUNTOS: 30? (15 malas, 15 buenas).
-    // Estructura visual: 3 grupos de 5.
+        const observer = new ResizeObserver(updateSize)
+        observer.observe(slotRef.current)
+        updateSize() // Medir initially
+
+        return () => observer.disconnect()
+    }, [team, setMatchstickSize])
 
     return (
         <section id={`section-${team}`}>
@@ -28,8 +38,15 @@ const PointSection: React.FC<PointSectionProps> = ({ team }) => {
                         const globalIndex = (groupId - 1) * 5 + slotIndex
                         const matchData = matches[globalIndex]
 
+                        // Ref al primer slot del primer grupo del equipo A
+                        const isRefSlot = team === 'A' && groupId === 1 && slotIndex === 0
+
                         return (
-                            <div key={slotIndex} className="matchstickPosition">
+                            <div
+                                key={slotIndex}
+                                className="matchstickPosition"
+                                ref={isRefSlot ? slotRef : undefined}
+                            >
                                 {matchData && <MatchStick data={matchData} />}
                             </div>
                         )

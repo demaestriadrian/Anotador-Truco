@@ -10,9 +10,10 @@ gsap.registerPlugin(Draggable)
 interface MatchStickProps {
     data?: MatchStickData
     isTemplate?: boolean
+    overrideSize?: { width: number | string, height: number | string }
 }
 
-const MatchStick: React.FC<MatchStickProps> = ({ data, isTemplate = false }) => {
+const MatchStick: React.FC<MatchStickProps> = ({ data, isTemplate = false, overrideSize }) => {
     const containerRef = useRef<HTMLDivElement>(null)
     const imgRef = useRef<HTMLImageElement>(null)
     const addPoint = useGameStore(state => state.addPoint)
@@ -51,12 +52,12 @@ const MatchStick: React.FC<MatchStickProps> = ({ data, isTemplate = false }) => 
     return (
         <picture
             ref={containerRef}
-            className="matchstick"
+            className={`matchstick ${isTemplate ? 'template' : ''}`}
             style={{
                 display: 'block',
                 position: 'absolute',
-                width: isTemplate ? '100px' : '100%', // Ajuste: en storage tiene tamaño fijo/relativo, en slot llena
-                height: isTemplate ? '5px' : '100%', // Ajuste según CSS original
+                width: overrideSize?.width ?? (isTemplate ? undefined : '100%'),
+                height: overrideSize?.height ?? (isTemplate ? undefined : '100%'),
                 ...randomPos
             }}
         >

@@ -10,8 +10,10 @@ interface GameState {
     scoreB: number
     matchesA: MatchStickData[]
     matchesB: MatchStickData[]
+    matchstickSize: { width: number, height: number } | null
     addPoint: (team: 'A' | 'B') => void
     removeLastPoint: (team: 'A' | 'B') => void
+    setMatchstickSize: (size: { width: number, height: number } | null) => void
     reset: () => void
 }
 
@@ -20,6 +22,7 @@ export const useGameStore = create<GameState>((set) => ({
     scoreB: 0,
     matchesA: [],
     matchesB: [],
+    matchstickSize: null,
 
     addPoint: (team) => {
         set((state) => {
@@ -51,6 +54,8 @@ export const useGameStore = create<GameState>((set) => ({
             };
         });
     },
+
+    setMatchstickSize: (size) => set({ matchstickSize: size }),
 
     reset: () => {
         set({
