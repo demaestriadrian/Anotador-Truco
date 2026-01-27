@@ -14,6 +14,7 @@ interface GameState {
     addPoint: (team: 'A' | 'B') => void
     removeLastPoint: (team: 'A' | 'B') => void
     setMatchstickSize: (size: { width: number, height: number } | null) => void
+    removeMatchstick: (id: string) => void
     reset: () => void
 }
 
@@ -47,6 +48,26 @@ export const useGameStore = create<GameState>((set) => ({
 
             const newMatches = [...state[keyMatches]];
             newMatches.pop();
+
+            return {
+                [keyScore]: Math.max(0, state[keyScore] - 1),
+                [keyMatches]: newMatches
+            };
+        });
+    },
+
+    removeMatchstick: (id) => {
+        set((state) => {
+            // Find which team has the matchstick
+            const isTeamA = state.matchesA.some(m => m.id === id);
+            const isTeamB = state.matchesB.some(m => m.id === id);
+
+            if (!isTeamA && !isTeamB) return {};
+
+            const keyScore = isTeamA ? 'scoreA' : 'scoreB';
+            const keyMatches = isTeamA ? 'matchesA' : 'matchesB';
+
+            const newMatches = state[keyMatches].filter(m => m.id !== id);
 
             return {
                 [keyScore]: Math.max(0, state[keyScore] - 1),

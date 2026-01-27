@@ -5,7 +5,7 @@ const App: React.FC = () => {
     return (
         <>
             <div id="referenceDrag"></div>
-            <main class="table">
+            <main className="table">
                 <ScoreKeeper />
             </main>
         </>
