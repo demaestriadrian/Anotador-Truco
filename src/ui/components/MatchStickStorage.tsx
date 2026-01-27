@@ -3,8 +3,8 @@ import { useGameStore } from '@/ui/store/useGameStore'
 import MatchStick from './MatchStick'
 
 const MatchStickStorage: React.FC = () => {
-    // Array estático de fillers para llenar la caja visualmente
-    const fillers = Array.from({ length: 30 })
+    // Array estático de fillers ahora reemplazado por real storage
+    const storageMatches = useGameStore(state => state.storageMatches)
     const matchstickSize = useGameStore(state => state.matchstickSize)
 
     return (
@@ -15,9 +15,10 @@ const MatchStickStorage: React.FC = () => {
                 transition: 'opacity 0.5s ease-in'
             }}
         >
-            {fillers.map((_, i) => (
+            {storageMatches.map((match) => (
                 <MatchStick
-                    key={i}
+                    key={match.id}
+                    data={match} // Pass the real data!
                     isTemplate={true}
                     overrideSize={matchstickSize || undefined}
                 />
