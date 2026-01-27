@@ -9,35 +9,35 @@ import { Flip } from 'gsap/all'
 gsap.registerPlugin(Flip)
 
 const ScoreKeeper: React.FC = () => {
-    // We need to track the match arrays to trigger Flip state capture
+    // Necesitamos rastrear los arrays de fósforos para activar la captura del estado Flip
     const matchesA = useGameStore(state => state.matchesA)
     const matchesB = useGameStore(state => state.matchesB)
 
-    // useGSAP with dependencies will run after render (DOM updated).
-    // To assume "Before" state, we need to capture it manually or rely on Flip's "state" object managed via refs.
-    // Standard React Flip Pattern:
-    // 1. Capture state immediately (or store previous state).
-    // Actually, useGSAP runs *after* render. So we are in the "After" state.
-    // If we want "Before", we need to capture it *before* the render commits? Impossible in functional component body generally?
-    // Pattern: 
+    // useGSAP con dependenias se ejecutará después del render (DOM actualizado).
+    // Para asumir el estado "Antes", necesitamos capturarlo manualmente o confiar en el objeto "state" de Flip gestionado vía refs.
+    // Patrón Flip Estándar de React:
+    // 1. Capturar estado inmediatamente (o guardar estado previo).
+    // En realidad, useGSAP se ejecuta *después* del render. Así que estamos en el estado "Después".
+    // Si queremos "Antes", necesitamos capturarlo *antes* de que el render se confirme? ¿Imposible en el cuerpo de un componente funcional generalmente?
+    // Patrón: 
     // const state = Flip.getState(targets); 
     // setThings(...);
     // Flip.from(state, ...);
 
-    // But here the store updates triggers the render. The render happens.
-    // We can use a ref to store the state of the *previous* render.
+    // Pero aquí las actualizaciones del store disparan el render. El render ocurre.
+    // Podemos usar una ref para guardar el estado del render *previo*.
 
     const flipState = useRef<Flip.FlipState | null>(null)
 
-    // Capture state *before* logic runs? No, logic runs then render.
-    // We can use `useLayoutEffect` (which useGSAP uses internally usually) 
-    // and a ref to "previous matches" to know if we need to animate.
-    // But simpler: Always Flip.from(lastState) and then save newState.
+    // ¿Capturar estado *antes* de que corra la lógica? No, la lógica corre luego el render.
+    // Podemos usar `useLayoutEffect` (que useGSAP usa internamente usualmente) 
+    // y una ref a "fósforos previos" para saber si necesitamos animar.
+    // Pero más simple: Siempre Flip.from(lastState) y luego guardar newState.
 
     useGSAP(() => {
         const targets = '.matchstick-item';
 
-        // If we have a previous state captured, animate FROM it TO current.
+        // Si tenemos un estado previo capturado, animar DESDE él HACIA el actual.
         if (flipState.current) {
             Flip.from(flipState.current, {
                 targets,
@@ -50,10 +50,10 @@ const ScoreKeeper: React.FC = () => {
             });
         }
 
-        // Capture current state for the NEXT update
+        // Capturar estado actual para la PRÓXIMA actualización
         flipState.current = Flip.getState(targets);
 
-    }, { dependencies: [matchesA, matchesB] }); // Re-run when matches change
+    }, { dependencies: [matchesA, matchesB] }); // Volver a ejecutar cuando los fósforos cambien
 
     return (
         <div className="scorekeeper">

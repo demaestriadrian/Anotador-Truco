@@ -24,7 +24,7 @@ const PointSection: React.FC<PointSectionProps> = ({ team }) => {
 
         const observer = new ResizeObserver(updateSize)
         observer.observe(slotRef.current)
-        updateSize() // Medir initially
+        updateSize() // Medir inicialmente
 
         return () => observer.disconnect()
     }, [team, setMatchstickSize])

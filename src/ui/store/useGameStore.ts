@@ -13,12 +13,12 @@ export interface MatchStickData {
 interface GameState {
     scoreA: number
     scoreB: number
-    storageMatches: MatchStickData[] // Pool of available matches
+    storageMatches: MatchStickData[] // Grupo de fósforos disponibles
     matchesA: MatchStickData[]
     matchesB: MatchStickData[]
     matchstickSize: { width: number, height: number } | null
 
-    // Actions
+    // Acciones
     moveFromStorage: (id: string, team: 'A' | 'B', origin?: { x: number, y: number }) => void
     removeMatchstick: (id: string) => void
     moveMatchstick: (id: string, toTeam: 'A' | 'B') => void
@@ -28,7 +28,7 @@ interface GameState {
 
 const TOTAL_MATCHES = 29;
 
-// Helper to generate initial pool
+// Ayudante para generar el grupo inicial
 const generateInitialMatches = (): MatchStickData[] => {
     return Array.from({ length: TOTAL_MATCHES }, () => ({
         id: crypto.randomUUID(),
@@ -50,22 +50,22 @@ export const useGameStore = create<GameState>((set) => ({
 
     moveFromStorage: (id, team, origin) => {
         set((state) => {
-            // Find in storage
+            // Buscar en almacenamiento
             const matchIndex = state.storageMatches.findIndex(m => m.id === id);
             if (matchIndex === -1) return {};
 
             const match = { ...state.storageMatches[matchIndex] };
 
-            // Update match with origin if provided (since we capture it on drag start)
+            // Actualizar fósforo con origen si se proporciona (dado que lo capturamos al iniciar el arrastre)
             if (origin) {
                 match.origin = origin;
             }
 
-            // Remove from storage
+            // Eliminar del almacenamiento
             const newStorage = [...state.storageMatches];
             newStorage.splice(matchIndex, 1);
 
-            // Add to team
+            // Agregar al equipo
             const keyScore = team === 'A' ? 'scoreA' : 'scoreB';
             const keyMatches = team === 'A' ? 'matchesA' : 'matchesB';
 
@@ -79,7 +79,7 @@ export const useGameStore = create<GameState>((set) => ({
 
     removeMatchstick: (id) => {
         set((state) => {
-            // Check if it's in A or B
+            // Verificar si está en A o en B
             const isTeamA = state.matchesA.some(m => m.id === id);
             const isTeamB = state.matchesB.some(m => m.id === id);
 
@@ -91,10 +91,10 @@ export const useGameStore = create<GameState>((set) => ({
             const matchToRemove = state[keyMatches].find(m => m.id === id);
             const newMatches = state[keyMatches].filter(m => m.id !== id);
 
-            // Return to storage pool!
-            // We keep its properties but maybe we want to reset origin? 
-            // The requirement says "vuelve a la posicion del storage".
-            // If we put it back in `storageMatches`, it will reappear in the storage component.
+            // ¡Volver al grupo de almacenamiento!
+            // Mantenemos sus propiedades pero ¿tal vez queremos reiniciar el origen?
+            // El requerimiento dice "vuelve a la posicion del storage".
+            // Si lo ponemos de vuelta en `storageMatches`, reaparecerá en el componente de almacenamiento.
 
             return {
                 [keyScore]: Math.max(0, state[keyScore] - 1),
@@ -145,7 +145,7 @@ export const useGameStore = create<GameState>((set) => ({
         set({
             scoreA: 0,
             scoreB: 0,
-            storageMatches: generateInitialMatches(), // Reset interactions
+            storageMatches: generateInitialMatches(), // Reiniciar interacciones
             matchesA: [],
             matchesB: []
         })
