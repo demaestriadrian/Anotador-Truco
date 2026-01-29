@@ -3,6 +3,14 @@ import { Draggable } from 'gsap/all'
 
 gsap.registerPlugin(Draggable)
 
+// Configuración de velocidad de animaciones (en segundos)
+const ANIMATION_DURATION = {
+    MOVE_TO_SLOT: 0.3,
+    RETURN_TO_ORIGIN: 0.5,
+    REMOVE_TO_STORAGE: 0.6,
+    REMOVE_FADE: 0.3
+}
+
 /**
  * Función de utilidad para extraer la rotación de un elemento de su computed style.
  */
@@ -67,7 +75,7 @@ export const useMatchstickAnimation = (elementRef: React.RefObject<HTMLElement |
             x: `+=${deltaX}`,
             y: `+=${deltaY}`,
             rotation: finalRotation,
-            duration: 0.3,
+            duration: ANIMATION_DURATION.MOVE_TO_SLOT,
             ease: "power2.out",
             onComplete: onComplete
         })
@@ -87,7 +95,7 @@ export const useMatchstickAnimation = (elementRef: React.RefObject<HTMLElement |
             x: 0,
             y: 0,
             rotation: variationRotation,
-            duration: 0.5,
+            duration: ANIMATION_DURATION.RETURN_TO_ORIGIN,
             ease: "power2.out",
             onComplete: onComplete
         })
@@ -117,7 +125,7 @@ export const useMatchstickAnimation = (elementRef: React.RefObject<HTMLElement |
                 x: `+=${deltaX}`,
                 y: `+=${deltaY}`,
                 rotation: variationRotation, // Vuelve a su variación
-                duration: 0.6,
+                duration: ANIMATION_DURATION.REMOVE_TO_STORAGE,
                 ease: "power2.inOut",
                 onComplete: onComplete
             })
@@ -126,7 +134,7 @@ export const useMatchstickAnimation = (elementRef: React.RefObject<HTMLElement |
             gsap.to(elementRef.current, {
                 opacity: 0,
                 scale: 0.5,
-                duration: 0.3,
+                duration: ANIMATION_DURATION.REMOVE_FADE,
                 onComplete: onComplete
             })
         }
