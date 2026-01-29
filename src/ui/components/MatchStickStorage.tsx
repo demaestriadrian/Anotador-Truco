@@ -21,6 +21,7 @@ const MatchStickStorage: React.FC = () => {
                     data={match} // Pass the real data!
                     isTemplate={true}
                     overrideSize={matchstickSize || undefined}
+                    currentTeam="storage"
                 />
             ))}
         </div>

@@ -47,7 +47,7 @@ const PointSection: React.FC<PointSectionProps> = ({ team }) => {
                                 className="matchstickPosition"
                                 ref={isRefSlot ? slotRef : undefined}
                             >
-                                {matchData && <MatchStick data={matchData} />}
+                                {matchData && <MatchStick data={matchData} currentTeam={team} />}
                             </div>
                         )
                     })}

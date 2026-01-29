@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 export interface MatchStickData {
     id: string;
-    origin?: { x: number, y: number }; // Posición inicial en storage (viewport coords o % si aplica)
+    origin?: { x: number, y: number }; // Posición inicial en storage
     variation?: {
         rotation: number;
         offsetX: number;
@@ -18,10 +18,9 @@ interface GameState {
     matchesB: MatchStickData[]
     matchstickSize: { width: number, height: number } | null
 
-    // Acciones
-    moveFromStorage: (id: string, team: 'A' | 'B', origin?: { x: number, y: number }) => void
-    removeMatchstick: (id: string) => void
-    moveMatchstick: (id: string, toTeam: 'A' | 'B') => void
+    // Acciones Unificadas
+    moveMatchstick: (id: string, from: 'storage' | 'A' | 'B' | null, to: 'storage' | 'A' | 'B' | null, origin?: { x: number, y: number }) => void
+
     setMatchstickSize: (size: { width: number, height: number } | null) => void
     reset: () => void
 }
@@ -36,8 +35,6 @@ const generateInitialMatches = (): MatchStickData[] => {
             rotation: (Math.random() - 0.5) * 10,
             offsetX: 0,
             offsetY: 0
-            // offsetX: (Math.random() - 0.5) * 5,
-            // offsetY: (Math.random() - 0.5) * 5
         }
     }));
 };
@@ -50,93 +47,68 @@ export const useGameStore = create<GameState>((set) => ({
     matchesB: [],
     matchstickSize: null,
 
-    moveFromStorage: (id, team, origin) => {
+    // Lógica Unificada de Movimiento
+    moveMatchstick: (id, from, to, origin) => {
         set((state) => {
-            // Buscar en almacenamiento
-            const matchIndex = state.storageMatches.findIndex(m => m.id === id);
-            if (matchIndex === -1) return {};
+            if (from === to) return {}; // Sin cambios
 
-            const match = { ...state.storageMatches[matchIndex] };
+            let match: MatchStickData | undefined;
 
-            // Actualizar fósforo con origen si se proporciona (dado que lo capturamos al iniciar el arrastre)
+            // 1. EXTRAER (REMOVE)
+            let newStorage = [...state.storageMatches];
+            let newMatchesA = [...state.matchesA];
+            let newMatchesB = [...state.matchesB];
+            let scoreA = state.scoreA;
+            let scoreB = state.scoreB;
+
+            if (from === 'storage') {
+                const idx = newStorage.findIndex(m => m.id === id);
+                if (idx !== -1) {
+                    match = { ...newStorage[idx] };
+                    newStorage.splice(idx, 1);
+                }
+            } else if (from === 'A') {
+                const idx = newMatchesA.findIndex(m => m.id === id);
+                if (idx !== -1) {
+                    match = { ...newMatchesA[idx] };
+                    newMatchesA.splice(idx, 1);
+                    scoreA = Math.max(0, scoreA - 1);
+                }
+            } else if (from === 'B') {
+                const idx = newMatchesB.findIndex(m => m.id === id);
+                if (idx !== -1) {
+                    match = { ...newMatchesB[idx] };
+                    newMatchesB.splice(idx, 1);
+                    scoreB = Math.max(0, scoreB - 1);
+                }
+            }
+
+            if (!match) return {}; // No encontrado
+
+            // Actualizar origen si se proporciona al mover desde storage o entre zonas
             if (origin) {
                 match.origin = origin;
             }
 
-            // Eliminar del almacenamiento
-            const newStorage = [...state.storageMatches];
-            newStorage.splice(matchIndex, 1);
-
-            // Agregar al equipo
-            const keyScore = team === 'A' ? 'scoreA' : 'scoreB';
-            const keyMatches = team === 'A' ? 'matchesA' : 'matchesB';
+            // 2. INSERTAR (ADD)
+            if (to === 'storage') {
+                // Volver a storage
+                newStorage.push(match);
+            } else if (to === 'A') {
+                newMatchesA.push(match);
+                scoreA++;
+            } else if (to === 'B') {
+                newMatchesB.push(match);
+                scoreB++;
+            }
+            // Si to === null, el fósforo se elimina permanentemente (no aplica para este juego, pero soportado)
 
             return {
                 storageMatches: newStorage,
-                [keyScore]: state[keyScore] + 1,
-                [keyMatches]: [...state[keyMatches], match]
-            };
-        });
-    },
-
-    removeMatchstick: (id) => {
-        set((state) => {
-            // Verificar si está en A o en B
-            const isTeamA = state.matchesA.some(m => m.id === id);
-            const isTeamB = state.matchesB.some(m => m.id === id);
-
-            if (!isTeamA && !isTeamB) return {};
-
-            const keyScore = isTeamA ? 'scoreA' : 'scoreB';
-            const keyMatches = isTeamA ? 'matchesA' : 'matchesB';
-
-            const matchToRemove = state[keyMatches].find(m => m.id === id);
-            const newMatches = state[keyMatches].filter(m => m.id !== id);
-
-            // ¡Volver al grupo de almacenamiento!
-            // Mantenemos sus propiedades pero ¿tal vez queremos reiniciar el origen?
-            // El requerimiento dice "vuelve a la posicion del storage".
-            // Si lo ponemos de vuelta en `storageMatches`, reaparecerá en el componente de almacenamiento.
-
-            return {
-                [keyScore]: Math.max(0, state[keyScore] - 1),
-                [keyMatches]: newMatches,
-                storageMatches: [...state.storageMatches, matchToRemove!]
-            };
-        });
-    },
-
-    moveMatchstick: (id, toTeam) => {
-        set((state) => {
-            // 1. Encontrar dónde está
-            const fromTeamA = state.matchesA.some(m => m.id === id);
-            const fromTeamB = state.matchesB.some(m => m.id === id);
-
-            if (!fromTeamA && !fromTeamB) return {}; // No existe
-
-            const fromTeam = fromTeamA ? 'A' : 'B';
-            if (fromTeam === toTeam) return {}; // Ya está ahí
-
-            // 2. Extraer data
-            const sourceKey = fromTeam === 'A' ? 'matchesA' : 'matchesB';
-            const targetKey = toTeam === 'A' ? 'matchesA' : 'matchesB';
-            const scoreSource = fromTeam === 'A' ? 'scoreA' : 'scoreB';
-            const scoreTarget = toTeam === 'A' ? 'scoreA' : 'scoreB';
-
-            const matchToMove = state[sourceKey].find(m => m.id === id);
-            if (!matchToMove) return {};
-
-            // 3. Remover de origen
-            const newSourceList = state[sourceKey].filter(m => m.id !== id);
-
-            // 4. Agregar a destino (al final)
-            const newTargetList = [...state[targetKey], matchToMove];
-
-            return {
-                [sourceKey]: newSourceList,
-                [targetKey]: newTargetList,
-                [scoreSource]: Math.max(0, state[scoreSource] - 1),
-                [scoreTarget]: state[scoreTarget] + 1
+                matchesA: newMatchesA,
+                matchesB: newMatchesB,
+                scoreA,
+                scoreB
             };
         });
     },
@@ -147,7 +119,7 @@ export const useGameStore = create<GameState>((set) => ({
         set({
             scoreA: 0,
             scoreB: 0,
-            storageMatches: generateInitialMatches(), // Reiniciar interacciones
+            storageMatches: generateInitialMatches(),
             matchesA: [],
             matchesB: []
         })
