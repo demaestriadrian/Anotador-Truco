@@ -25,7 +25,6 @@ const MatchStick: React.FC<MatchStickProps> = ({ data, isTemplate = false, overr
     const storageOrigin = useRef<{ x: number, y: number } | null>(null)
 
     // Calcular posición aleatoria para templates
-    // Calcular posición aleatoria para templates
     // NOTA: Esto se ejecuta en cada render, pero useMemo lo estabiliza.
     // SIN EMBARGO: ¿Si eliminamos del almacenamiento y volvemos a poner, nueva posición aleatoria?
     // ¿Idealmente guardar la posición aleatoria inicial en data.variation también?
@@ -75,9 +74,48 @@ const MatchStick: React.FC<MatchStickProps> = ({ data, isTemplate = false, overr
 
                     if (hitA || hitB) {
                         const team = hitA ? 'A' : 'B';
-                        // Pasar el origen de almacenamiento CAPTURADO al nuevo punto
-                        // ¡Llamar a moveFromStorage en lugar de addPoint!
-                        moveFromStorage(data.id, team, storageOrigin.current || undefined)
+                        const containerId = `#section-${team}`;
+                        const container = document.querySelector(containerId);
+
+                        // Buscar el primer slot VACÍO visualmente
+                        // Nota: Esto asume que los slots se llenan en orden.
+                        // Buscamos .matchstickPosition que NO tenga un hijo .matchstick-item
+                        let targetSlot: Element | null = null;
+                        if (container) {
+                            // Convertir NodeList a Array para usar find
+                            const slots = Array.from(container.querySelectorAll('.matchstickPosition'));
+                            targetSlot = slots.find(slot => slot.children.length === 0) || null;
+                        }
+
+                        if (targetSlot) {
+                            // Calcular posición destino relativa al viewport
+                            const targetRect = targetSlot.getBoundingClientRect();
+                            const currentRect = (this.target as HTMLElement).getBoundingClientRect();
+
+                            // Delta para moverse al destino
+                            const deltaX = targetRect.left - currentRect.left;
+                            const deltaY = targetRect.top - currentRect.top;
+
+                            // Deshabilitar interacción durante la "fase de viaje"
+                            this.disable();
+
+                            gsap.to(this.target, {
+                                x: `+=${deltaX}`,
+                                y: `+=${deltaY}`,
+                                duration: 0.3,
+                                ease: "power2.out",
+                                onComplete: () => {
+                                    // AQUÍ actualizamos el estado
+                                    moveFromStorage(data.id, team, storageOrigin.current || undefined);
+                                    // Re-habilitar (aunque el componente se desmontará/re-renderizará como item de juego)
+                                    // this.enable(); 
+                                }
+                            });
+                        } else {
+                            // Si no hay slots (raro, pero posible si está lleno), volver
+                            gsap.to(this.target, { x: 0, y: 0, duration: 0.5 });
+                        }
+
                     } else {
                         // Volver si no se soltó en una zona
                         gsap.to(this.target, { x: 0, y: 0, duration: 0.5 })
@@ -88,25 +126,54 @@ const MatchStick: React.FC<MatchStickProps> = ({ data, isTemplate = false, overr
                 // --- Lógica para Fósforo Jugado ---
                 if (!isTemplate && data) {
 
-                    // 1. Verificar Mantener para Eliminar (si se suelta en zona válida usualmente, pero simplificado aquí)
-
-                    const inZoneA = this.hitTest('#section-A', '50%'); // 50% de superposición para contar como "dentro"
+                    const inZoneA = this.hitTest('#section-A', '50%');
                     const inZoneB = this.hitTest('#section-B', '50%');
 
-                    // Determinar el equipo actual basado en dónde ESTABA (no lo guardamos en el componente, pero la verificación del store lo maneja)
-                    // Podemos mover a Otra Zona
-                    if (inZoneA) {
-                        // Si estaba en B, mover a A. Si estaba en A, volver.
-                        // Podemos llamar ciegamente a move. UseGameStore maneja "si ya está ahí".
-                        moveMatchstick(data.id, 'A');
-                        gsap.to(this.target, { x: 0, y: 0, duration: 0.3 }); // Ajustar posible desplazamiento visual
-                    } else if (inZoneB) {
-                        moveMatchstick(data.id, 'B');
-                        gsap.to(this.target, { x: 0, y: 0, duration: 0.3 });
+                    // Determinar destino deseado
+                    let targetTeam: 'A' | 'B' | null = null;
+                    if (inZoneA) targetTeam = 'A';
+                    else if (inZoneB) targetTeam = 'B';
+
+                    if (targetTeam) {
+                        const containerId = `#section-${targetTeam}`;
+                        const container = document.querySelector(containerId);
+
+                        // Para mover, el slot destino podría ser el último, O uno nuevo si estamos cambiando de equipo.
+                        // Simplificación: Buscar el primer slot vacío.
+                        let targetSlot: Element | null = null;
+                        if (container) {
+                            const slots = Array.from(container.querySelectorAll('.matchstickPosition'));
+                            // Excluir mi propio slot actual si estoy en la misma zona (pero GSAP me sacó visualmente)
+                            // En realidad, 'slots' son los div contenedores. Yo estoy "volando" encima.
+                            // Si me muevo a otra zona, busco vacío.
+                            targetSlot = slots.find(slot => slot.children.length === 0) || null;
+                        }
+
+                        if (targetSlot) {
+                            const targetRect = targetSlot.getBoundingClientRect();
+                            const currentRect = (this.target as HTMLElement).getBoundingClientRect();
+                            const deltaX = targetRect.left - currentRect.left;
+                            const deltaY = targetRect.top - currentRect.top;
+
+                            this.disable();
+
+                            gsap.to(this.target, {
+                                x: `+=${deltaX}`,
+                                y: `+=${deltaY}`,
+                                duration: 0.3,
+                                ease: "power2.out",
+                                onComplete: () => {
+                                    moveMatchstick(data.id, targetTeam!);
+                                }
+                            });
+                        } else {
+                            // Si no encuentra slot (ej. lleno), volver a 0,0 (su posición original lógica)
+                            gsap.to(this.target, { x: 0, y: 0, duration: 0.3 });
+                        }
+
                     } else {
                         // Soltado AFUERA (Volver al Almacenamiento)
                         if (data.origin) {
-                            // Calcular delta para volver al origen
                             const rect = (this.target as HTMLElement).getBoundingClientRect();
                             const deltaX = data.origin.x - rect.left;
                             const deltaY = data.origin.y - rect.top;
@@ -119,7 +186,6 @@ const MatchStick: React.FC<MatchStickProps> = ({ data, isTemplate = false, overr
                                 onComplete: () => removeMatchstick(data.id)
                             });
                         } else {
-                            // respaldo si no hay origen
                             removeMatchstick(data.id);
                         }
                     }

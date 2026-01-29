@@ -34,8 +34,10 @@ const generateInitialMatches = (): MatchStickData[] => {
         id: crypto.randomUUID(),
         variation: {
             rotation: (Math.random() - 0.5) * 10,
-            offsetX: (Math.random() - 0.5) * 5,
-            offsetY: (Math.random() - 0.5) * 5
+            offsetX: 0,
+            offsetY: 0
+            // offsetX: (Math.random() - 0.5) * 5,
+            // offsetY: (Math.random() - 0.5) * 5
         }
     }));
 };
