@@ -53,6 +53,14 @@ export const useMatchstickLogic = (
 
                 // Caso 1: Se soltó en una zona válida (A o B)
                 if (targetTeam) {
+                    // Si el destino es el mismo equipo donde ya está, devolvemos al origen
+                    // para evitar que busque el "siguiente slot vacío" (que sería el incorrecto)
+                    // y cree una desincronización visual.
+                    if (targetTeam === currentTeam) {
+                        animation.animateReturnToOrigin()
+                        return
+                    }
+
                     const containerSelector = `#section-${targetTeam}`
                     const targetSlot = findNextEmptySlot(containerSelector)
 
