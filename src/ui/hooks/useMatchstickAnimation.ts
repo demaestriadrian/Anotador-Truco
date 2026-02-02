@@ -66,10 +66,9 @@ export const useMatchstickAnimation = (elementRef: React.RefObject<HTMLElement |
         // Obtener la rotación del slot de destino
         const targetRotation = getElementRotation(targetElement)
 
-        // Obtener la variación propia (para sumarla a la del slot)
-        const variationRotation = getVariationRotation(elementRef.current)
 
-        const finalRotation = targetRotation + variationRotation
+
+        const finalRotation = targetRotation
 
         gsap.to(elementRef.current, {
             x: `+=${deltaX}`,

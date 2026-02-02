@@ -48,8 +48,8 @@ const MatchStick: React.FC<MatchStickProps> = ({
                 ...randomPos,
                 cursor: 'grab',
                 zIndex: isTemplate ? 10 : 100,
-                // Aplicar variación visual (rotación/offset) si existe en los datos
-                transform: data?.variation
+                // Aplicar variación visual (rotación/offset) solo si es template (en storage)
+                transform: (isTemplate && data?.variation)
                     ? `rotate(${data.variation.rotation}deg) translate(${data.variation.offsetX}px, ${data.variation.offsetY}px)`
                     : undefined
             }}
