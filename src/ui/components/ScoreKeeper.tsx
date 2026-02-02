@@ -2,6 +2,8 @@ import React, { useRef } from 'react'
 import { useGameStore } from '@/ui/store/useGameStore'
 import PointSection from './PointSection'
 import MatchStickStorage from './MatchStickStorage'
+import TeamName from './TeamName'
+import Separator from './Separator'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { Flip } from 'gsap/all'
@@ -12,6 +14,9 @@ const ScoreKeeper: React.FC = () => {
     // Necesitamos rastrear los arrays de fósforos para activar la captura del estado Flip
     const matchesA = useGameStore(state => state.matchesA)
     const matchesB = useGameStore(state => state.matchesB)
+    const scoreA = useGameStore(state => state.scoreA)
+    const scoreB = useGameStore(state => state.scoreB)
+    const MAX_SCORE = 30; // Constant for now, could be dynamic later
 
     // useGSAP con dependenias se ejecutará después del render (DOM actualizado).
     // Para asumir el estado "Antes", necesitamos capturarlo manualmente o confiar en el objeto "state" de Flip gestionado vía refs.
@@ -57,14 +62,28 @@ const ScoreKeeper: React.FC = () => {
 
     return (
         <div className="scorekeeper">
-            <div className="score">
-                <input id="nameTeam1" type="text" placeholder="Nosotros" />
-                <input id="nameTeam2" type="text" placeholder="Ellos" />
-            </div>
-            <div id="separator-h"></div>
+            <header className="score-header">
+                {/* Reference Score A */}
+                <div className="score-reference"><span>{scoreA}</span></div>
+
+                {/* Team A Name */}
+                <TeamName teamId="A" placeholder="NOSOTROS" />
+
+                {/* Max Score */}
+                <div className="max-score">{MAX_SCORE}</div>
+
+                {/* Team B Name */}
+                <TeamName teamId="B" placeholder="ELLOS" />
+
+                {/* Reference Score B */}
+                <div className="score-reference"><span>{scoreB}</span></div>
+            </header>
+
+            <Separator orientation="horizontal" />
+
             <div className="points">
                 <PointSection team="A" />
-                <div id="separator-v"></div>
+                <Separator orientation="vertical" />
                 <PointSection team="B" />
             </div>
             <MatchStickStorage />

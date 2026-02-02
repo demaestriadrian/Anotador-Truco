@@ -1,16 +1,52 @@
 #separator-h {
   width: 100%;
-  background-color: white;
-  height: .7%;
-  min-height: 4px;
-
-  border-radius: 50% 50% 50% 50%;
+  background: rgba(255, 255, 255, 0.2);
+  height: 2px;
+  margin: 0;
+  border-radius: 2px;
 }
 
 #separator-v {
+  position: relative;
   height: 100%;
-  background-color: white;
-  width: .7%;
-  min-width: 4px;
-  border-radius: 0% 0% 0% 100%;
+  width: 12px;
+  /* Slightly wider for the ribbon effect */
+  min-width: 8px;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 100% 95%, 50% 97%, 0 95%);
+}
+
+.flag-ribbon {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      #75AADB 30%,
+      #FFFFFF 30%,
+      #FFFFFF 70%,
+      #75AADB 70%);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+/* Optional: Add a sun or subtle texture if desired, but gradient is a good start */
+.flag-ribbon::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.1) 50%,
+      transparent 60%,
+      rgba(255, 255, 255, 0.2) 80%,
+      transparent 100%);
+  pointer-events: none;
 }
