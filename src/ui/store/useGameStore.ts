@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 
+import { devtools } from 'zustand/middleware'
+
 export interface MatchStickData {
     id: string;
     origin?: { x: number, y: number }; // Posición inicial en storage
@@ -39,89 +41,95 @@ const generateInitialMatches = (): MatchStickData[] => {
     }));
 };
 
-export const useGameStore = create<GameState>((set) => ({
-    scoreA: 0,
-    scoreB: 0,
-    storageMatches: generateInitialMatches(),
-    matchesA: [],
-    matchesB: [],
-    matchstickSize: null,
-
-    // Lógica Unificada de Movimiento
-    moveMatchstick: (id, from, to, origin) => {
-        set((state) => {
-            if (from === to) return {}; // Sin cambios
-
-            let match: MatchStickData | undefined;
-
-            // 1. EXTRAER (REMOVE)
-            let newStorage = [...state.storageMatches];
-            let newMatchesA = [...state.matchesA];
-            let newMatchesB = [...state.matchesB];
-            let scoreA = state.scoreA;
-            let scoreB = state.scoreB;
-
-            if (from === 'storage') {
-                const idx = newStorage.findIndex(m => m.id === id);
-                if (idx !== -1) {
-                    match = { ...newStorage[idx] };
-                    newStorage.splice(idx, 1);
-                }
-            } else if (from === 'A') {
-                const idx = newMatchesA.findIndex(m => m.id === id);
-                if (idx !== -1) {
-                    match = { ...newMatchesA[idx] };
-                    newMatchesA.splice(idx, 1);
-                    scoreA = Math.max(0, scoreA - 1);
-                }
-            } else if (from === 'B') {
-                const idx = newMatchesB.findIndex(m => m.id === id);
-                if (idx !== -1) {
-                    match = { ...newMatchesB[idx] };
-                    newMatchesB.splice(idx, 1);
-                    scoreB = Math.max(0, scoreB - 1);
-                }
-            }
-
-            if (!match) return {}; // No encontrado
-
-            // Actualizar origen si se proporciona al mover desde storage o entre zonas
-            if (origin) {
-                match.origin = origin;
-            }
-
-            // 2. INSERTAR (ADD)
-            if (to === 'storage') {
-                // Volver a storage
-                newStorage.push(match);
-            } else if (to === 'A') {
-                newMatchesA.push(match);
-                scoreA++;
-            } else if (to === 'B') {
-                newMatchesB.push(match);
-                scoreB++;
-            }
-            // Si to === null, el fósforo se elimina permanentemente (no aplica para este juego, pero soportado)
-
-            return {
-                storageMatches: newStorage,
-                matchesA: newMatchesA,
-                matchesB: newMatchesB,
-                scoreA,
-                scoreB
-            };
-        });
-    },
-
-    setMatchstickSize: (size) => set({ matchstickSize: size }),
-
-    reset: () => {
-        set({
+export const useGameStore = create<GameState>()(
+    devtools(
+        (set) => ({
             scoreA: 0,
             scoreB: 0,
             storageMatches: generateInitialMatches(),
             matchesA: [],
-            matchesB: []
-        })
-    }
-}))
+            matchesB: [],
+            matchstickSize: null,
+
+            // Lógica Unificada de Movimiento
+            moveMatchstick: (id, from, to, origin) => {
+                set((state) => {
+                    if (from === to) return {}; // Sin cambios
+
+                    let match: MatchStickData | undefined;
+
+                    // 1. EXTRAER (REMOVE)
+                    let newStorage = [...state.storageMatches];
+                    let newMatchesA = [...state.matchesA];
+                    let newMatchesB = [...state.matchesB];
+                    let scoreA = state.scoreA;
+                    let scoreB = state.scoreB;
+
+                    if (from === 'storage') {
+                        const idx = newStorage.findIndex(m => m.id === id);
+                        if (idx !== -1) {
+                            match = { ...newStorage[idx] };
+                            newStorage.splice(idx, 1);
+                        }
+                    } else if (from === 'A') {
+                        const idx = newMatchesA.findIndex(m => m.id === id);
+                        if (idx !== -1) {
+                            match = { ...newMatchesA[idx] };
+                            newMatchesA.splice(idx, 1);
+                            scoreA = Math.max(0, scoreA - 1);
+                        }
+                    } else if (from === 'B') {
+                        const idx = newMatchesB.findIndex(m => m.id === id);
+                        if (idx !== -1) {
+                            match = { ...newMatchesB[idx] };
+                            newMatchesB.splice(idx, 1);
+                            scoreB = Math.max(0, scoreB - 1);
+                        }
+                    }
+
+                    if (!match) return {}; // No encontrado
+
+                    // Actualizar origen si se proporciona al mover desde storage o entre zonas
+                    if (origin) {
+                        match.origin = origin;
+                    }
+
+                    // 2. INSERTAR (ADD)
+                    if (to === 'storage') {
+                        // Volver a storage
+                        newStorage.push(match);
+                    } else if (to === 'A') {
+                        newMatchesA.push(match);
+                        scoreA++;
+                    } else if (to === 'B') {
+                        newMatchesB.push(match);
+                        scoreB++;
+                    }
+                    // Si to === null, el fósforo se elimina permanentemente (no aplica para este juego, pero soportado)
+
+                    return {
+                        storageMatches: newStorage,
+                        matchesA: newMatchesA,
+                        matchesB: newMatchesB,
+                        scoreA,
+                        scoreB
+                    };
+                }, false, 'moveMatchstick');
+            },
+
+            setMatchstickSize: (size) => set({ matchstickSize: size }, false, 'setMatchstickSize'),
+
+            reset: () => {
+                set({
+                    scoreA: 0,
+                    scoreB: 0,
+                    storageMatches: generateInitialMatches(),
+                    matchesA: [],
+                    matchesB: []
+                }, false, 'reset')
+            }
+        }),
+        { name: 'GameStore' }
+    )
+)
+
