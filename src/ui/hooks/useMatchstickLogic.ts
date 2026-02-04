@@ -12,7 +12,7 @@ interface AnimationControls {
 
 export const useMatchstickLogic = (
     data: MatchStickData | undefined,
-    isTemplate: boolean,
+    isStoraged: boolean,
     currentTeam: 'A' | 'B' | 'storage' | undefined,
     animation: AnimationControls,
     scope: React.RefObject<HTMLElement | null> // Scope para GSAP context
@@ -38,7 +38,7 @@ export const useMatchstickLogic = (
             zIndexBoost: false,
             onPress: function () {
                 // Si es template (storage), guardamos su posición visual actual como origen
-                if (isTemplate) {
+                if (isStoraged) {
                     const rect = (this.target as HTMLElement).getBoundingClientRect();
                     storageOrigin.current = { x: rect.left, y: rect.top };
                 }
@@ -70,7 +70,7 @@ export const useMatchstickLogic = (
                         animation.animateMoveTo(targetSlot, () => {
                             // Al terminar la animación visual, actualizamos el estado lógico
                             // Determinamos 'from' explicitamente
-                            const from = currentTeam || (isTemplate ? 'storage' : null);
+                            const from = currentTeam || (isStoraged ? 'storage' : null);
 
                             moveMatchstick(data.id, from, targetTeam, storageOrigin.current || undefined)
                         })
@@ -81,13 +81,13 @@ export const useMatchstickLogic = (
                 }
                 // Caso 2: Se soltó fuera (o en zona inválida)
                 else {
-                    if (isTemplate) {
+                    if (isStoraged) {
                         // Si venía del storage y cae fuera, vuelve al storage (origin)
                         animation.animateReturnToOrigin()
                     } else {
                         // Si era un item jugado y cae fuera -> Eliminar (volver a storage)
                         animation.animateRemove(data.origin, () => {
-                            const from = currentTeam || (isTemplate ? 'storage' : null);
+                            const from = currentTeam || (isStoraged ? 'storage' : null);
                             moveMatchstick(data.id, from, 'storage')
                         })
                     }
@@ -95,5 +95,5 @@ export const useMatchstickLogic = (
             }
         })
 
-    }, { scope, dependencies: [data, isTemplate, currentTeam] })
+    }, { scope, dependencies: [data, isStoraged, currentTeam] })
 }
