@@ -7,6 +7,7 @@ import './truco-matchstick-storage.js'
 
 import type { PointMatchData } from './truco-point-section.js'
 import type { StorageMatchData } from './truco-matchstick-storage.js'
+import type { MatchstickMoveDetail } from './controllers/MatchstickLogicController.js'
 
 const TOTAL_MATCHES = 29
 
@@ -109,9 +110,74 @@ export class TrucoScorekeeper extends LitElement {
         this._stickHeight = e.detail.height
     }
 
+    /**
+     * Maneja el evento de movimiento de un fósforo.
+     * Actualiza los arrays de fósforos y los scores según from/to.
+     */
+    private _handleMatchstickMove(e: CustomEvent<MatchstickMoveDetail>) {
+        const { id, from, to, origin } = e.detail
+        if (from === to) return
+
+        // 1. Extraer el fósforo de su origen
+        let match: StorageMatchData | PointMatchData | undefined
+
+        if (from === 'storage') {
+            const idx = this.storageMatchItems.findIndex((m) => m.id === id)
+            if (idx !== -1) {
+                match = { ...this.storageMatchItems[idx] }
+                this.storageMatchItems = [
+                    ...this.storageMatchItems.slice(0, idx),
+                    ...this.storageMatchItems.slice(idx + 1),
+                ]
+            }
+        } else if (from === 'A') {
+            const idx = this.matchesA.findIndex((m) => m.id === id)
+            if (idx !== -1) {
+                match = { ...this.matchesA[idx] }
+                this.matchesA = [
+                    ...this.matchesA.slice(0, idx),
+                    ...this.matchesA.slice(idx + 1),
+                ]
+                this.scoreA = Math.max(0, this.scoreA - 1)
+            }
+        } else if (from === 'B') {
+            const idx = this.matchesB.findIndex((m) => m.id === id)
+            if (idx !== -1) {
+                match = { ...this.matchesB[idx] }
+                this.matchesB = [
+                    ...this.matchesB.slice(0, idx),
+                    ...this.matchesB.slice(idx + 1),
+                ]
+                this.scoreB = Math.max(0, this.scoreB - 1)
+            }
+        }
+
+        if (!match) return
+
+        // Guardar origen si se proporciona
+        if (origin) {
+            (match as PointMatchData).origin = origin
+        }
+
+        // 2. Insertar en el destino
+        if (to === 'storage') {
+            this.storageMatchItems = [...this.storageMatchItems, match]
+        } else if (to === 'A') {
+            this.matchesA = [...this.matchesA, match as PointMatchData]
+            this.scoreA++
+        } else if (to === 'B') {
+            this.matchesB = [...this.matchesB, match as PointMatchData]
+            this.scoreB++
+        }
+    }
+
     render() {
         return html`
-            <div class="scorekeeper" @matchstick-size=${this._handleMatchstickSize}>
+            <div
+                    class="scorekeeper"
+                    @matchstick-size=${this._handleMatchstickSize}
+                    @matchstick-move=${this._handleMatchstickMove}
+                >
                 <header class="score-header">
                     <div class="score-reference">
                         <span>${this.scoreA}</span>
