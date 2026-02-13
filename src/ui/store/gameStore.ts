@@ -3,12 +3,8 @@ import { createStore, produce } from 'solid-js/store'
 // Datos de un fósforo individual
 export interface MatchStickData {
     id: string;
-    origin?: { x: number, y: number }; // Posición inicial en storage
-    variation?: {
-        rotation: number;
-        offsetX: number;
-        offsetY: number;
-    }
+    /** Rotación aleatoria leve para aspecto natural (en grados) */
+    variationRotation: number;
 }
 
 // Estado completo del juego
@@ -27,11 +23,7 @@ const TOTAL_MATCHES = 29;
 const generateInitialMatches = (): MatchStickData[] => {
     return Array.from({ length: TOTAL_MATCHES }, () => ({
         id: crypto.randomUUID(),
-        variation: {
-            rotation: (Math.random() - 0.5) * 10,
-            offsetX: 0,
-            offsetY: 0
-        }
+        variationRotation: (Math.random() - 0.5) * 10,
     }));
 };
 
@@ -55,7 +47,6 @@ export const moveMatchstick = (
     id: string,
     from: 'storage' | 'A' | 'B' | null,
     to: 'storage' | 'A' | 'B' | null,
-    origin?: { x: number, y: number }
 ) => {
     setGameState(produce((state) => {
         if (from === to) return; // Sin cambios
@@ -81,9 +72,6 @@ export const moveMatchstick = (
         // Actualizar score al sacar de zona de equipo
         if (from === 'A') state.scoreA = Math.max(0, state.scoreA - 1)
         if (from === 'B') state.scoreB = Math.max(0, state.scoreB - 1)
-
-        // Actualizar origen si se proporciona
-        if (origin) match.origin = origin
 
         // Insertar en la lista destino
         const destList = getList(to)

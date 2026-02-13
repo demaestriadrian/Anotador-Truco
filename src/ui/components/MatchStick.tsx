@@ -31,8 +31,7 @@ const MatchStick = (props: MatchStickProps) => {
     createMatchstickLogic(
         () => containerRef,
         () => props.data,
-        props.isStoraged ?? false,
-        props.currentTeam,
+        props.currentTeam ?? 'storage',
         animation
     )
 
@@ -40,7 +39,7 @@ const MatchStick = (props: MatchStickProps) => {
         <picture
             ref={containerRef}
             class={`matchstick ${props.isStoraged ? 'template' : 'matchstick-item'}`}
-            data-flip-id={!props.isStoraged && props.data ? props.data.id : undefined}
+            data-flip-id={props.data ? props.data.id : undefined}
             style={{
                 display: 'block',
                 position: 'absolute',
@@ -49,9 +48,9 @@ const MatchStick = (props: MatchStickProps) => {
                 ...randomPos,
                 cursor: 'grab',
                 'z-index': props.isStoraged ? 10 : 100,
-                // Variación visual (rotación/offset) solo para template (en storage)
-                transform: (props.isStoraged && props.data?.variation)
-                    ? `rotate(${props.data.variation.rotation}deg) translate(${props.data.variation.offsetX}px, ${props.data.variation.offsetY}px)`
+                // Variación visual (rotación leve) solo para template (en storage)
+                transform: (props.isStoraged && props.data)
+                    ? `rotate(${props.data.variationRotation}deg)`
                     : undefined
             }}
         >

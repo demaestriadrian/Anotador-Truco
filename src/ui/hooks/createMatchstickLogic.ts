@@ -6,28 +6,132 @@ import type { MatchstickAnimationControls } from './createMatchstickAnimation'
 
 gsap.registerPlugin(Draggable)
 
+type MatchstickZone = 'A' | 'B' | 'storage'
+
 /**
  * Inicializa la lógica de drag & drop de un fósforo.
- * Se ejecuta una vez al montar el componente (onMount de Solid).
- * GSAP controla todo el movimiento; Solid solo provee el contenedor DOM.
+ *
+ * Responsabilidades:
+ * - Crear el Draggable de GSAP para manejar el arrastre.
+ * - Determinar la zona de destino al soltar (hitTest).
+ * - Mover lógicamente el fósforo en el DOM (re-parentar al contenedor destino).
+ * - Comunicar cambios al gameStore.
+ * - Delegar TODA la animación al módulo createMatchstickAnimation.
+ *
+ * NO calcula posiciones, deltas, ni rotaciones. Flip se encarga de eso.
  */
 export const createMatchstickLogic = (
     getElement: () => HTMLElement | undefined,
     getData: () => MatchStickData | undefined,
-    isStoraged: boolean,
-    currentTeam: 'A' | 'B' | 'storage' | undefined,
+    currentZone: MatchstickZone,
     animation: MatchstickAnimationControls
 ) => {
-    let storageOrigin: { x: number, y: number } | null = null
     let draggableInstance: Draggable[] | null = null
 
-    // Busca el siguiente slot vacío dentro de un contenedor
-    const findNextEmptySlot = (containerSelector: string): Element | null => {
-        const container = document.querySelector(containerSelector)
+    const isStoraged = currentZone === 'storage'
+
+    /**
+     * Busca el siguiente slot vacío dentro de una sección de equipo.
+     */
+    const findNextEmptySlot = (team: 'A' | 'B'): Element | null => {
+        const container = document.querySelector(`#section-${team}`)
         if (!container) return null
 
         const slots = Array.from(container.querySelectorAll('.matchstickPosition'))
         return slots.find(slot => slot.children.length === 0) || null
+    }
+
+    /**
+     * Mueve el elemento DOM del fósforo al slot destino.
+     * Limpia transforms de GSAP antes de re-parentar para que
+     * Flip calcule la posición real del nuevo layout.
+     */
+    const reparentToSlot = (el: HTMLElement, slot: Element) => {
+        animation.clearTransforms()
+        slot.appendChild(el)
+    }
+
+    /**
+     * Devuelve el elemento DOM del fósforo al storage.
+     */
+    const reparentToStorage = (el: HTMLElement): boolean => {
+        const storageContainer = document.querySelector('#matchstick-storage')
+        if (!storageContainer) return false
+
+        animation.clearTransforms()
+        storageContainer.appendChild(el)
+        return true
+    }
+
+    /**
+     * Determina la zona de destino basándose en hitTest del Draggable.
+     */
+    const resolveTargetZone = (draggable: Draggable): 'A' | 'B' | null => {
+        if (draggable.hitTest('#section-A', '50%')) return 'A'
+        if (draggable.hitTest('#section-B', '50%')) return 'B'
+        return null
+    }
+
+    /**
+     * Maneja el caso: fósforo soltado en una zona de equipo válida.
+     */
+    const handleDropOnTeam = (el: HTMLElement, data: MatchStickData, targetTeam: 'A' | 'B', draggable: Draggable) => {
+        // Si el destino es el mismo equipo donde ya está, snap back
+        if (targetTeam === currentZone) {
+            animation.animateSnapBack()
+            return
+        }
+
+        const targetSlot = findNextEmptySlot(targetTeam)
+        if (!targetSlot) {
+            // Zona llena → snap back
+            animation.animateSnapBack()
+            return
+        }
+
+        // Deshabilitar drag mientras anima
+        draggable.disable()
+
+        // 1. Capturar estado ANTES del cambio en el DOM
+        const state = animation.captureState()
+        if (!state) return
+
+        // 2. Mover el elemento en el DOM (re-parent al slot destino)
+        reparentToSlot(el, targetSlot)
+
+        // 3. Animar con Flip desde la posición anterior a la nueva
+        animation.animateFlipTo(state, () => {
+            // 4. Al completar la animación, actualizar el store
+            moveMatchstick(data.id, currentZone, targetTeam)
+        })
+    }
+
+    /**
+     * Maneja el caso: fósforo soltado fuera de cualquier zona válida.
+     */
+    const handleDropOutside = (el: HTMLElement, data: MatchStickData, draggable: Draggable) => {
+        if (isStoraged) {
+            // Venía del storage y cayó fuera → volver a su lugar (snap back sin cambio de DOM)
+            animation.animateSnapBack()
+        } else {
+            // Era un fósforo jugado y cayó fuera → devolver al storage
+            draggable.disable()
+
+            // 1. Capturar estado antes del cambio
+            const state = animation.captureState()
+
+            // 2. Mover en el DOM al storage
+            const moved = reparentToStorage(el)
+            if (!moved) {
+                animation.animateSnapBack()
+                return
+            }
+
+            // 3. Animar con Flip hacia la posición del storage
+            animation.animateReturnToStorage(state, () => {
+                moveMatchstick(data.id, currentZone, 'storage')
+            })
+        }
     }
 
     onMount(() => {
@@ -35,63 +139,25 @@ export const createMatchstickLogic = (
         const data = getData()
         if (!el || !data) return
 
+        // Guardar la posición de origen en el storage para poder volver después
+        if (isStoraged) {
+            animation.saveOrigin()
+        }
+
         draggableInstance = Draggable.create(el, {
             type: 'x,y',
             zIndexBoost: false,
-            onPress: function () {
-                // Si es template (storage), guardamos su posición visual actual como origen
-                if (isStoraged) {
-                    const rect = (this.target as HTMLElement).getBoundingClientRect()
-                    storageOrigin = { x: rect.left, y: rect.top }
-                }
-            },
-            onRelease: function () {
-                const data = getData()
-                if (!data) return
+            onRelease: function (this: Draggable) {
+                const currentData = getData()
+                const currentEl = getElement()
+                if (!currentData || !currentEl) return
 
-                const hitA = this.hitTest('#section-A', '50%')
-                const hitB = this.hitTest('#section-B', '50%')
+                const targetTeam = resolveTargetZone(this)
 
-                let targetTeam: 'A' | 'B' | null = null
-                if (hitA) targetTeam = 'A'
-                else if (hitB) targetTeam = 'B'
-
-                // Caso 1: Se soltó en una zona válida (A o B)
                 if (targetTeam) {
-                    // Si el destino es el mismo equipo donde ya está, devolvemos al origen
-                    if (targetTeam === currentTeam) {
-                        animation.animateReturnToOrigin()
-                        return
-                    }
-
-                    const containerSelector = `#section-${targetTeam}`
-                    const targetSlot = findNextEmptySlot(containerSelector)
-
-                    if (targetSlot) {
-                        this.disable() // Deshabilitar mientras viaja
-
-                        animation.animateMoveTo(targetSlot, () => {
-                            // Al terminar la animación visual, actualizamos el estado lógico
-                            const from = currentTeam || (isStoraged ? 'storage' : null)
-                            moveMatchstick(data.id, from, targetTeam, storageOrigin || undefined)
-                        })
-                    } else {
-                        // Zona llena → Volver
-                        animation.animateReturnToOrigin()
-                    }
-                }
-                // Caso 2: Se soltó fuera (o en zona inválida)
-                else {
-                    if (isStoraged) {
-                        // Si venía del storage y cae fuera, vuelve al storage (origin)
-                        animation.animateReturnToOrigin()
-                    } else {
-                        // Si era un item jugado y cae fuera → Eliminar (volver a storage)
-                        animation.animateRemove(data.origin, () => {
-                            const from = currentTeam || (isStoraged ? 'storage' : null)
-                            moveMatchstick(data.id, from, 'storage')
-                        })
-                    }
+                    handleDropOnTeam(currentEl, currentData, targetTeam, this)
+                } else {
+                    handleDropOutside(currentEl, currentData, this)
                 }
             }
         })

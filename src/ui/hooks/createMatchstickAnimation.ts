@@ -1,7 +1,7 @@
 import gsap from 'gsap'
-import { Draggable } from 'gsap/all'
+import { Flip } from 'gsap/all'
 
-gsap.registerPlugin(Draggable)
+gsap.registerPlugin(Flip)
 
 // Configuración de velocidad de animaciones (en segundos)
 const ANIMATION_DURATION = {
@@ -12,111 +12,110 @@ const ANIMATION_DURATION = {
 }
 
 /**
- * Extrae la rotación de un elemento a partir de su computed style.
- */
-const getElementRotation = (element: Element): number => {
-    const style = window.getComputedStyle(element)
-    const transform = style.transform || style.webkitTransform
-    if (!transform || transform === 'none') return 0
-
-    const values = transform.split('(')[1].split(')')[0].split(',')
-    const a = parseFloat(values[0])
-    const b = parseFloat(values[1])
-    return Math.round(Math.atan2(b, a) * (180 / Math.PI))
-}
-
-/**
- * Extrae la rotación de variación guardada en el inline style del elemento.
- */
-const getVariationRotation = (element: HTMLElement): number => {
-    const transform = element.style.transform
-    const match = transform.match(/rotate\(([-\d.]+)deg\)/)
-    return match ? parseFloat(match[1]) : 0
-}
-
-/**
- * Crea controles de animación para un fósforo.
+ * Crea controles de animación para un fósforo usando GSAP Flip.
+ *
+ * Flip captura el estado visual (posición, tamaño, rotación) del elemento
+ * ANTES de un cambio en el DOM, y luego anima la transición desde la
+ * posición anterior hacia la nueva posición real en el layout.
+ *
+ * Esto elimina la necesidad de calcular deltas manualmente con getBoundingClientRect.
+ *
  * Recibe una función getter que retorna el elemento DOM actual.
- * No depende de ningún framework — usa GSAP directamente.
+ * No depende de ningún framework — usa GSAP Flip directamente.
  */
 export const createMatchstickAnimation = (getElement: () => HTMLElement | undefined) => {
 
+    /** Estado Flip de la posición original del fósforo en el storage. */
+    let originState: Flip.FlipState | undefined
+
     /**
-     * Mueve el elemento visualmente a una posición destino relativa al viewport.
-     * Calcula el delta desde la posición actual hasta el destino.
+     * Guarda la posición actual del fósforo como su "origin" en el storage.
+     * Debe llamarse una vez al montar el componente, cuando el fósforo
+     * está en su posición inicial dentro del storage.
      */
-    const animateMoveTo = (targetElement: Element, onComplete?: () => void) => {
+    const saveOrigin = () => {
+        const el = getElement()
+        if (!el) return
+        originState = Flip.getState(el)
+    }
+
+    /**
+     * Retorna el estado origin guardado (puede ser undefined si aún no se guardó).
+     */
+    const getOrigin = (): Flip.FlipState | undefined => originState
+
+    /**
+     * Captura el estado actual del fósforo (posición, tamaño, transforms).
+     * Debe llamarse ANTES de cualquier cambio en el DOM.
+     */
+    const captureState = (): Flip.FlipState | undefined => {
+        const el = getElement()
+        if (!el) return undefined
+        return Flip.getState(el)
+    }
+
+    /**
+     * Anima el fósforo desde un estado capturado hacia su nueva posición en el DOM.
+     * El elemento YA debe haber sido movido/re-parentado al contenedor destino.
+     */
+    const animateFlipTo = (state: Flip.FlipState, onComplete?: () => void) => {
         const el = getElement()
         if (!el) return
 
-        const targetRect = targetElement.getBoundingClientRect()
-        const currentRect = el.getBoundingClientRect()
-
-        // Calcular centros para alinear mejor
-        const targetCenterX = targetRect.left + targetRect.width / 2
-        const targetCenterY = targetRect.top + targetRect.height / 2
-        const currentCenterX = currentRect.left + currentRect.width / 2
-        const currentCenterY = currentRect.top + currentRect.height / 2
-
-        const deltaX = targetCenterX - currentCenterX
-        const deltaY = targetCenterY - currentCenterY
-
-        // Obtener la rotación del slot de destino
-        const targetRotation = getElementRotation(targetElement)
-
-        gsap.to(el, {
-            x: `+=${deltaX}`,
-            y: `+=${deltaY}`,
-            rotation: targetRotation,
+        Flip.from(state, {
+            targets: el,
             duration: ANIMATION_DURATION.MOVE_TO_SLOT,
             ease: "power2.out",
+            absolute: true,
             onComplete
         })
     }
 
     /**
-     * Devuelve el elemento a su posición original (0,0).
-     * Útil cuando se suelta en una zona inválida.
+     * Anima el retorno del fósforo a su posición de origen en el DOM usando Flip.
      */
-    const animateReturnToOrigin = (onComplete?: () => void) => {
+    const animateFlipReturn = (state: Flip.FlipState, onComplete?: () => void) => {
         const el = getElement()
         if (!el) return
 
-        // Volver a la rotación de variación original
-        const variationRotation = getVariationRotation(el)
-
-        gsap.to(el, {
-            x: 0,
-            y: 0,
-            rotation: variationRotation,
+        Flip.from(state, {
+            targets: el,
             duration: ANIMATION_DURATION.RETURN_TO_ORIGIN,
             ease: "power2.out",
+            absolute: true,
             onComplete
         })
     }
 
     /**
-     * Anima la salida del elemento (ej. al volver al almacenamiento).
-     * Puede moverse hacia una posición específica (origen guardado) o desvanecerse.
+     * Anima la remoción del fósforo de vuelta al storage usando el origin guardado.
+     *
+     * Si existe un originState, anima con Flip desde la posición actual
+     * hacia la posición original en el storage (el elemento ya debe haber
+     * sido re-parenteado al storage antes de llamar esta función).
+     * Si no existe origin, hace un fade out in-place como fallback.
+     *
+     * @param currentState - Estado capturado ANTES de mover el elemento al storage.
+     * @param onComplete - Callback opcional al completar la animación.
      */
-    const animateRemove = (origin?: { x: number, y: number }, onComplete?: () => void) => {
+    const animateReturnToStorage = (
+        currentState?: Flip.FlipState,
+        onComplete?: () => void
+    ) => {
         const el = getElement()
         if (!el) return
 
-        const variationRotation = getVariationRotation(el)
-
-        if (origin) {
-            const currentRect = el.getBoundingClientRect()
-            const deltaX = origin.x - currentRect.left
-            const deltaY = origin.y - currentRect.top
-
-            gsap.to(el, {
-                x: `+=${deltaX}`,
-                y: `+=${deltaY}`,
-                rotation: variationRotation,
+        if (currentState) {
+            Flip.from(currentState, {
+                targets: el,
                 duration: ANIMATION_DURATION.REMOVE_TO_STORAGE,
                 ease: "power2.inOut",
-                onComplete
+                absolute: true,
+                onComplete: () => {
+                    // Actualizar el origin por si el layout cambió
+                    saveOrigin()
+                    onComplete?.()
+                }
             })
         } else {
             // Fallback: Desvanecer y escalar hacia abajo
@@ -129,10 +128,44 @@ export const createMatchstickAnimation = (getElement: () => HTMLElement | undefi
         }
     }
 
+    /**
+     * Anima el retorno del fósforo a su posición de layout actual
+     * (sin cambiar el DOM, solo deshaciendo el desplazamiento del drag).
+     * Útil cuando se suelta en una zona inválida y no hay cambio de contenedor.
+     */
+    const animateSnapBack = (onComplete?: () => void) => {
+        const el = getElement()
+        if (!el) return
+
+        gsap.to(el, {
+            x: 0,
+            y: 0,
+            duration: ANIMATION_DURATION.RETURN_TO_ORIGIN,
+            ease: "power2.out",
+            onComplete
+        })
+    }
+
+    /**
+     * Resetea las transforms GSAP del elemento para que Flip pueda
+     * calcular correctamente la posición real del layout.
+     * Útil después de un drag donde GSAP aplicó x/y al elemento.
+     */
+    const clearTransforms = () => {
+        const el = getElement()
+        if (!el) return
+        gsap.set(el, { x: 0, y: 0, clearProps: "transform" })
+    }
+
     return {
-        animateMoveTo,
-        animateReturnToOrigin,
-        animateRemove
+        saveOrigin,
+        getOrigin,
+        captureState,
+        animateFlipTo,
+        animateFlipReturn,
+        animateReturnToStorage,
+        animateSnapBack,
+        clearTransforms
     }
 }
 
