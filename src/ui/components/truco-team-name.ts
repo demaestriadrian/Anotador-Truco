@@ -35,6 +35,7 @@ export class TrucoTeamName extends LitElement {
             font-family: inherit;
             text-transform: uppercase;
             letter-spacing: 1px;
+            user-select: text;
         }
 
         .team-name-input::placeholder {
