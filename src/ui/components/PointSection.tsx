@@ -42,7 +42,7 @@ const PointSection = (props: PointSectionProps) => {
                                 return (
                                     <div
                                         class="matchstickPosition"
-                                        ref={isRefSlot ? slotRef : undefined}
+                                        ref={(el) => { if (isRefSlot) slotRef = el }}
                                     >
                                         <Show when={matches()[globalIndex]}>
                                             {(matchData) => (
