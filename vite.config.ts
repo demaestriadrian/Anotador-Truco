@@ -1,9 +1,9 @@
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
-import react from '@vitejs/plugin-react'
+import solidPlugin from 'vite-plugin-solid'
 
 export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
+  plugins: [tsconfigPaths(), solidPlugin()],
   server: {
     port: 5500
   },

@@ -1,11 +1,10 @@
-import React from 'react'
 import ScoreKeeper from './ScoreKeeper'
 
-const App: React.FC = () => {
+const App = () => {
     return (
         <>
             <div id="referenceDrag"></div>
-            <main className="table">
+            <main class="table">
                 <ScoreKeeper />
             </main>
         </>

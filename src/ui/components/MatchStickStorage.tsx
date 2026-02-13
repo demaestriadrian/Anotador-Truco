@@ -1,29 +1,26 @@
-import React from 'react'
-import { useGameStore } from '@/ui/store/useGameStore'
+import { For } from 'solid-js'
+import { gameState } from '@/ui/store/gameStore'
 import MatchStick from './MatchStick'
 
-const MatchStickStorage: React.FC = () => {
-    // Array estático de fillers ahora reemplazado por real storage
-    const storageMatches = useGameStore(state => state.storageMatches)
-    const matchstickSize = useGameStore(state => state.matchstickSize)
-
+const MatchStickStorage = () => {
     return (
         <div
-            className="matchstickStorage"
+            class="matchstickStorage"
             style={{
-                opacity: matchstickSize ? 1 : 0,
+                opacity: gameState.matchstickSize ? 1 : 0,
                 transition: 'opacity 0.5s ease-in'
             }}
         >
-            {storageMatches.map((match) => (
-                <MatchStick
-                    key={match.id}
-                    data={match} // Pass the real data!
-                    isStoraged={true}
-                    overrideSize={matchstickSize || undefined}
-                    currentTeam="storage"
-                />
-            ))}
+            <For each={gameState.storageMatches}>
+                {(match) => (
+                    <MatchStick
+                        data={match}
+                        isStoraged={true}
+                        overrideSize={gameState.matchstickSize || undefined}
+                        currentTeam="storage"
+                    />
+                )}
+            </For>
         </div>
     )
 }

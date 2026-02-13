@@ -1,64 +1,64 @@
-import React, { useRef, useMemo } from 'react'
 import { positionRandomX, positionRandomY } from '@/ui/utils'
-import { MatchStickData } from '@/ui/store/useGameStore'
-import { useMatchstickAnimation } from '@/ui/hooks/useMatchstickAnimation'
-import { useMatchstickLogic } from '@/ui/hooks/useMatchstickLogic'
+import type { MatchStickData } from '@/ui/store/gameStore'
+import { createMatchstickAnimation } from '@/ui/hooks/createMatchstickAnimation'
+import { createMatchstickLogic } from '@/ui/hooks/createMatchstickLogic'
+
+// Convierte un valor numérico a string con 'px', o pasa strings tal cual
+const toCss = (val: number | string | undefined): string | undefined => {
+    if (val === undefined) return undefined
+    return typeof val === 'number' ? `${val}px` : val
+}
 
 interface MatchStickProps {
     data?: MatchStickData
     isStoraged?: boolean
     overrideSize?: { width: number | string, height: number | string }
-    currentTeam?: 'A' | 'B' | 'storage' // Nueva propiedad para saber el contexto
+    currentTeam?: 'A' | 'B' | 'storage'
 }
 
-const MatchStick: React.FC<MatchStickProps> = ({
-    data,
-    isStoraged = false,
-    overrideSize,
-    currentTeam
-}) => {
-    const containerRef = useRef<HTMLElement>(null)
-    const imgRef = useRef<HTMLImageElement>(null)
+const MatchStick = (props: MatchStickProps) => {
+    let containerRef: HTMLElement | undefined
 
-    // Nota: 'randomPos' se usa para dar sensación de desorden en la caja de fósforos.
-    // Solo aplica si es un template (está en el almacenamiento/caja).
-    const randomPos = useMemo(() => {
-        if (!isStoraged) return {}
-        return {
-            left: `${positionRandomX() * 100}%`,
-            top: `${positionRandomY() * 100}%`
-        }
-    }, [isStoraged])
+    // Posición aleatoria solo para fósforos en storage (sensación de desorden)
+    const randomPos = props.isStoraged
+        ? { left: `${positionRandomX() * 100}%`, top: `${positionRandomY() * 100}%` }
+        : {}
 
-    // Inicializamos los hooks de animación y lógica
-    const animation = useMatchstickAnimation(containerRef)
-    useMatchstickLogic(data, isStoraged, currentTeam, animation, containerRef)
+    // Crear controles de animación con getter del elemento DOM
+    const animation = createMatchstickAnimation(() => containerRef)
+
+    // Inicializar lógica de drag & drop
+    createMatchstickLogic(
+        () => containerRef,
+        () => props.data,
+        props.isStoraged ?? false,
+        props.currentTeam,
+        animation
+    )
 
     return (
         <picture
             ref={containerRef}
-            className={`matchstick ${isStoraged ? 'template' : 'matchstick-item'}`}
-            // Usamos data-flip-id si queremos animaciones FLIP en el futuro (opcional por ahora)
-            data-flip-id={!isStoraged && data ? data.id : undefined}
+            class={`matchstick ${props.isStoraged ? 'template' : 'matchstick-item'}`}
+            data-flip-id={!props.isStoraged && props.data ? props.data.id : undefined}
             style={{
                 display: 'block',
                 position: 'absolute',
-                width: overrideSize?.width ?? (isStoraged ? undefined : '100%'),
-                height: overrideSize?.height ?? (isStoraged ? undefined : '100%'),
+                width: toCss(props.overrideSize?.width) ?? (props.isStoraged ? undefined : '100%'),
+                height: toCss(props.overrideSize?.height) ?? (props.isStoraged ? undefined : '100%'),
                 ...randomPos,
                 cursor: 'grab',
-                zIndex: isStoraged ? 10 : 100,
-                // Aplicar variación visual (rotación/offset) solo si es template (en storage)
-                transform: (isStoraged && data?.variation)
-                    ? `rotate(${data.variation.rotation}deg) translate(${data.variation.offsetX}px, ${data.variation.offsetY}px)`
+                'z-index': props.isStoraged ? 10 : 100,
+                // Variación visual (rotación/offset) solo para template (en storage)
+                transform: (props.isStoraged && props.data?.variation)
+                    ? `rotate(${props.data.variation.rotation}deg) translate(${props.data.variation.offsetX}px, ${props.data.variation.offsetY}px)`
                     : undefined
             }}
         >
             <img
-                ref={imgRef}
                 src="/img/matchstickNew.webp"
                 alt="fósforo"
-                style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
+                style={{ width: '100%', height: '100%', 'pointer-events': 'none' }}
             />
         </picture>
     )

@@ -12,7 +12,7 @@ const ANIMATION_DURATION = {
 }
 
 /**
- * Función de utilidad para extraer la rotación de un elemento de su computed style.
+ * Extrae la rotación de un elemento a partir de su computed style.
  */
 const getElementRotation = (element: Element): number => {
     const style = window.getComputedStyle(element)
@@ -26,7 +26,7 @@ const getElementRotation = (element: Element): number => {
 }
 
 /**
- * Función de utilidad para extraer la rotación de variación guardada en el inline style.
+ * Extrae la rotación de variación guardada en el inline style del elemento.
  */
 const getVariationRotation = (element: HTMLElement): number => {
     const transform = element.style.transform
@@ -35,28 +35,26 @@ const getVariationRotation = (element: HTMLElement): number => {
 }
 
 /**
- * Hook para manejar las animaciones del fósforo.
- * Abstrae la complejidad de GSAP y expone métodos semánticos.
+ * Crea controles de animación para un fósforo.
+ * Recibe una función getter que retorna el elemento DOM actual.
+ * No depende de ningún framework — usa GSAP directamente.
  */
-export const useMatchstickAnimation = (elementRef: React.RefObject<HTMLElement | null>) => {
+export const createMatchstickAnimation = (getElement: () => HTMLElement | undefined) => {
 
     /**
      * Mueve el elemento visualmente a una posición destino relativa al viewport.
      * Calcula el delta desde la posición actual hasta el destino.
-     * 
-     * @param targetElement Elemento DOM destino (slot vacío).
-     * @param onComplete Callback al finalizar la animación.
      */
     const animateMoveTo = (targetElement: Element, onComplete?: () => void) => {
-        if (!elementRef.current) return
+        const el = getElement()
+        if (!el) return
 
         const targetRect = targetElement.getBoundingClientRect()
-        const currentRect = elementRef.current.getBoundingClientRect()
+        const currentRect = el.getBoundingClientRect()
 
-        // Calcular centros para alinear mejor (especialmente con rotación)
+        // Calcular centros para alinear mejor
         const targetCenterX = targetRect.left + targetRect.width / 2
         const targetCenterY = targetRect.top + targetRect.height / 2
-
         const currentCenterX = currentRect.left + currentRect.width / 2
         const currentCenterY = currentRect.top + currentRect.height / 2
 
@@ -66,75 +64,67 @@ export const useMatchstickAnimation = (elementRef: React.RefObject<HTMLElement |
         // Obtener la rotación del slot de destino
         const targetRotation = getElementRotation(targetElement)
 
-
-
-        const finalRotation = targetRotation
-
-        gsap.to(elementRef.current, {
+        gsap.to(el, {
             x: `+=${deltaX}`,
             y: `+=${deltaY}`,
-            rotation: finalRotation,
+            rotation: targetRotation,
             duration: ANIMATION_DURATION.MOVE_TO_SLOT,
             ease: "power2.out",
-            onComplete: onComplete
+            onComplete
         })
     }
 
     /**
-     * Devuelve el elemento a su posición original (0,0 relativo a su montaje inicial/reset).
+     * Devuelve el elemento a su posición original (0,0).
      * Útil cuando se suelta en una zona inválida.
      */
     const animateReturnToOrigin = (onComplete?: () => void) => {
-        if (!elementRef.current) return
+        const el = getElement()
+        if (!el) return
 
         // Volver a la rotación de variación original
-        const variationRotation = getVariationRotation(elementRef.current)
+        const variationRotation = getVariationRotation(el)
 
-        gsap.to(elementRef.current, {
+        gsap.to(el, {
             x: 0,
             y: 0,
             rotation: variationRotation,
             duration: ANIMATION_DURATION.RETURN_TO_ORIGIN,
             ease: "power2.out",
-            onComplete: onComplete
+            onComplete
         })
     }
 
     /**
      * Anima la salida del elemento (ej. al volver al almacenamiento).
-     * Puede moverse hacia una posición específica (origen guardado) o simplemente desvanecerse.
-     * 
-     * @param origin - Posición opcional a la cual volar.
-     * @param onComplete - Importante: Aquí se debe llamar a la eliminación del store.
+     * Puede moverse hacia una posición específica (origen guardado) o desvanecerse.
      */
     const animateRemove = (origin?: { x: number, y: number }, onComplete?: () => void) => {
-        if (!elementRef.current) return
+        const el = getElement()
+        if (!el) return
 
-        const variationRotation = getVariationRotation(elementRef.current)
+        const variationRotation = getVariationRotation(el)
 
         if (origin) {
-            // Usamos centroides para consistencia si origin apuntara al centro, 
-            // pero origin viene de storageOrigin que era Top-Left. 
-            // Mantenemos Top-Left para animateRemove para ser consistente con cómo se guardó.
-            const currentRect = elementRef.current.getBoundingClientRect()
+            const currentRect = el.getBoundingClientRect()
             const deltaX = origin.x - currentRect.left
             const deltaY = origin.y - currentRect.top
 
-            gsap.to(elementRef.current, {
+            gsap.to(el, {
                 x: `+=${deltaX}`,
                 y: `+=${deltaY}`,
-                rotation: variationRotation, // Vuelve a su variación
+                rotation: variationRotation,
                 duration: ANIMATION_DURATION.REMOVE_TO_STORAGE,
                 ease: "power2.inOut",
-                onComplete: onComplete
+                onComplete
             })
         } else {
             // Fallback: Desvanecer y escalar hacia abajo
-            gsap.to(elementRef.current, {
+            gsap.to(el, {
                 opacity: 0,
                 scale: 0.5,
                 duration: ANIMATION_DURATION.REMOVE_FADE,
-                onComplete: onComplete
+                onComplete
             })
         }
     }
@@ -145,3 +135,6 @@ export const useMatchstickAnimation = (elementRef: React.RefObject<HTMLElement |
         animateRemove
     }
 }
+
+// Tipo exportado para usar en otros módulos
+export type MatchstickAnimationControls = ReturnType<typeof createMatchstickAnimation>

@@ -1,58 +1,61 @@
-import React, { useRef, useLayoutEffect } from 'react'
-import { useGameStore } from '@/ui/store/useGameStore'
+import { onMount, For, Show } from 'solid-js'
+import { gameState, setMatchstickSize } from '@/ui/store/gameStore'
 import MatchStick from './MatchStick'
 
 interface PointSectionProps {
     team: 'A' | 'B'
 }
 
-const PointSection: React.FC<PointSectionProps> = ({ team }) => {
-    const matches = useGameStore(state => team === 'A' ? state.matchesA : state.matchesB)
-    const setMatchstickSize = useGameStore(state => state.setMatchstickSize)
-    const slotRef = useRef<HTMLDivElement>(null)
+const PointSection = (props: PointSectionProps) => {
+    let slotRef: HTMLDivElement | undefined
 
-    useLayoutEffect(() => {
-        // Solo medir si somos el equipo A y el primer slot para evitar duplicidad
-        if (team !== 'A' || !slotRef.current) return
+    // Obtener los fósforos del equipo correspondiente
+    const matches = () => props.team === 'A' ? gameState.matchesA : gameState.matchesB
+
+    onMount(() => {
+        // Solo medir si somos el equipo A para evitar duplicidad
+        if (props.team !== 'A' || !slotRef) return
 
         const updateSize = () => {
-            if (slotRef.current) {
-                const { width, height } = slotRef.current.getBoundingClientRect()
+            if (slotRef) {
+                const { width, height } = slotRef.getBoundingClientRect()
                 setMatchstickSize({ width, height })
             }
         }
 
         const observer = new ResizeObserver(updateSize)
-        observer.observe(slotRef.current)
+        observer.observe(slotRef)
         updateSize() // Medir inicialmente
-
-        return () => observer.disconnect()
-    }, [team, setMatchstickSize])
+    })
 
     return (
-        <section id={`section-${team}`}>
-            {[1, 2, 3].map(groupId => (
-                <div key={groupId} className="containerMatchstick" id={`${team.toLowerCase()}${groupId}`}>
-                    {[0, 1, 2, 3, 4].map(slotIndex => {
-                        // Calcular índice global del fósforo: (groupId-1)*5 + slotIndex
-                        const globalIndex = (groupId - 1) * 5 + slotIndex
-                        const matchData = matches[globalIndex]
+        <section id={`section-${props.team}`}>
+            <For each={[1, 2, 3]}>
+                {(groupId) => (
+                    <div class="containerMatchstick" id={`${props.team.toLowerCase()}${groupId}`}>
+                        <For each={[0, 1, 2, 3, 4]}>
+                            {(slotIndex) => {
+                                // Índice global del fósforo: (groupId-1)*5 + slotIndex
+                                const globalIndex = (groupId - 1) * 5 + slotIndex
+                                const isRefSlot = props.team === 'A' && groupId === 1 && slotIndex === 0
 
-                        // Ref al primer slot del primer grupo del equipo A
-                        const isRefSlot = team === 'A' && groupId === 1 && slotIndex === 0
-
-                        return (
-                            <div
-                                key={slotIndex}
-                                className="matchstickPosition"
-                                ref={isRefSlot ? slotRef : undefined}
-                            >
-                                {matchData && <MatchStick data={matchData} currentTeam={team} />}
-                            </div>
-                        )
-                    })}
-                </div>
-            ))}
+                                return (
+                                    <div
+                                        class="matchstickPosition"
+                                        ref={isRefSlot ? slotRef : undefined}
+                                    >
+                                        <Show when={matches()[globalIndex]}>
+                                            {(matchData) => (
+                                                <MatchStick data={matchData()} currentTeam={props.team} />
+                                            )}
+                                        </Show>
+                                    </div>
+                                )
+                            }}
+                        </For>
+                    </div>
+                )}
+            </For>
         </section>
     )
 }

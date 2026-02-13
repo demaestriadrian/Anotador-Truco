@@ -15,7 +15,7 @@
       ]
     },
     "skipLibCheck": true,
-    /* Bundler mode */
+    /* Modo bundler */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
@@ -26,7 +26,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "jsx": "react-jsx"
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
   },
   "include": [
     "src/**/*",

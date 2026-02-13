@@ -1,21 +1,23 @@
-import React from 'react';
-import '@/ui/styles/separator.css';
+import { Show } from 'solid-js'
+import '@/ui/styles/separator.css'
 
 interface SeparatorProps {
-    orientation: 'horizontal' | 'vertical';
-    className?: string;
+    orientation: 'horizontal' | 'vertical'
+    class?: string
 }
 
-const Separator: React.FC<SeparatorProps> = ({ orientation, className = '' }) => {
+const Separator = (props: SeparatorProps) => {
     return (
         <div
-            className={`separator separator-${orientation} ${className}`}
-            id={`separator-${orientation === 'horizontal' ? 'h' : 'v'}`}
+            class={`separator separator-${props.orientation} ${props.class ?? ''}`}
+            id={`separator-${props.orientation === 'horizontal' ? 'h' : 'v'}`}
         >
-            {/* Inner elements for flag styling if needed, but CSS background is usually enough */}
-            {orientation === 'vertical' && <div className="flag-ribbon"></div>}
+            {/* Elementos internos para el estilo de cinta/bandera */}
+            <Show when={props.orientation === 'vertical'}>
+                <div class="flag-ribbon"></div>
+            </Show>
         </div>
-    );
-};
+    )
+}
 
-export default Separator;
+export default Separator
