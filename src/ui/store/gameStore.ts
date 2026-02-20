@@ -1,4 +1,5 @@
 import { createStore, produce } from 'solid-js/store'
+import { TOTAL_MATCHES } from '@/core/domain/constants'
 
 // Datos de un fósforo individual
 export interface MatchStickData {
@@ -17,11 +18,9 @@ interface GameState {
     matchstickSize: { width: number, height: number } | null
 }
 
-const TOTAL_MATCHES = 29;
-
 // Genera el grupo inicial de fósforos con variaciones aleatorias
 const generateInitialMatches = (): MatchStickData[] => {
-    return Array.from({ length: TOTAL_MATCHES }, () => ({
+    return Array.from({ length: TOTAL_MATCHES-1 }, () => ({
         id: crypto.randomUUID(),
         variationRotation: (Math.random() - 0.5) * 10,
     }));

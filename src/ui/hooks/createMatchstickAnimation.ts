@@ -1,15 +1,8 @@
 import gsap from 'gsap'
 import { Flip } from 'gsap/all'
+import { ANIMATION_DURATION } from '@/ui/constants'
 
 gsap.registerPlugin(Flip)
-
-// Configuración de velocidad de animaciones (en segundos)
-const ANIMATION_DURATION = {
-    MOVE_TO_SLOT: 0.3,
-    RETURN_TO_ORIGIN: 0.5,
-    REMOVE_TO_STORAGE: 0.6,
-    REMOVE_FADE: 0.3
-}
 
 /**
  * Crea controles de animación para un fósforo usando GSAP Flip.

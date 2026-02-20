@@ -1,11 +1,12 @@
 import { Team } from './Team';
+import { MAX_SCORE } from '@/core/domain/constants';
 
 export class Match {
     private _teamA: Team;
     private _teamB: Team;
     private _limit: number; // 15 o 30
 
-    constructor(teamAName: string = "Nosotros", teamBName: string = "Ellos", limit: number = 30) {
+    constructor(teamAName: string = "Nosotros", teamBName: string = "Ellos", limit: number = MAX_SCORE) {
         this._teamA = new Team('team_a', teamAName);
         this._teamB = new Team('team_b', teamBName);
         this._limit = limit;

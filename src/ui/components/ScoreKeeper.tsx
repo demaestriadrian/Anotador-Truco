@@ -6,10 +6,10 @@ import TeamName from './TeamName'
 import Separator from './Separator'
 import gsap from 'gsap'
 import { Flip } from 'gsap/all'
+import { MAX_SCORE } from '@/core/domain/constants'
+import { FLIP_ANIMATION } from '@/ui/constants'
 
 gsap.registerPlugin(Flip)
-
-const MAX_SCORE = 30
 
 const ScoreKeeper = () => {
     let flipState: Flip.FlipState | null = null
@@ -25,16 +25,16 @@ const ScoreKeeper = () => {
             if (flipState) {
                 Flip.from(flipState, {
                     targets,
-                    duration: 0.5,
-                    ease: 'power2.inOut',
-                    stagger: 0.1,
+                    duration: FLIP_ANIMATION.DURATION,
+                    ease: FLIP_ANIMATION.EASE,
+                    stagger: FLIP_ANIMATION.STAGGER,
                     simple: true,
                     onEnter: elements => gsap.fromTo(elements,
                         { opacity: 0, scale: 0 },
-                        { opacity: 1, scale: 1, duration: 0.3 }
+                        { opacity: 1, scale: 1, duration: FLIP_ANIMATION.ENTER_DURATION }
                     ),
                     onLeave: elements => gsap.to(elements,
-                        { opacity: 0, scale: 0, duration: 0.3 }
+                        { opacity: 0, scale: 0, duration: FLIP_ANIMATION.LEAVE_DURATION }
                     )
                 })
             }
