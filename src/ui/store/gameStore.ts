@@ -1,108 +1,87 @@
 import { createStore, produce } from 'solid-js/store'
 import { TOTAL_MATCHES } from '@/core/domain/constants'
 
-// Datos de un fósforo individual
 export interface MatchStickData {
-    id: string;
-    /** Rotación aleatoria leve para aspecto natural (en grados) */
-    variationRotation: number;
+    id: string
+    variationRotation: number
+    zone: 'storage' | 'A' | 'B'
+    slotIndex: number | null
 }
 
-// Estado completo del juego
 interface GameState {
     scoreA: number
     scoreB: number
-    storageMatches: MatchStickData[]
-    matchesA: MatchStickData[]
-    matchesB: MatchStickData[]
-    matchstickSize: { width: number, height: number } | null
+    matches: MatchStickData[]
+    matchstickSize: { width: number; height: number } | null
 }
 
-// Genera el grupo inicial de fósforos con variaciones aleatorias
 const generateInitialMatches = (): MatchStickData[] => {
-    return Array.from({ length: TOTAL_MATCHES-1 }, () => ({
+    return Array.from({ length: TOTAL_MATCHES - 1 }, () => ({
         id: crypto.randomUUID(),
         variationRotation: (Math.random() - 0.5) * 10,
-    }));
-};
-
-// Store reactivo de SolidJS
-const [gameState, setGameState] = createStore<GameState>({
-    scoreA: 0,
-    scoreB: 0,
-    storageMatches: generateInitialMatches(),
-    matchesA: [],
-    matchesB: [],
-    matchstickSize: null
-})
-
-// --- Acciones ---
-
-/**
- * Mueve un fósforo entre zonas (storage, A, B, null).
- * Actualiza scores automáticamente al mover hacia/desde zonas de equipo.
- */
-export const moveMatchstick = (
-    id: string,
-    from: 'storage' | 'A' | 'B' | null,
-    to: 'storage' | 'A' | 'B' | null,
-) => {
-    setGameState(produce((state) => {
-        if (from === to) return; // Sin cambios
-
-        // Buscar el fósforo en la lista de origen
-        const getList = (zone: typeof from) => {
-            if (zone === 'storage') return state.storageMatches
-            if (zone === 'A') return state.matchesA
-            if (zone === 'B') return state.matchesB
-            return null
-        }
-
-        const sourceList = getList(from)
-        if (!sourceList) return
-
-        const idx = sourceList.findIndex(m => m.id === id)
-        if (idx === -1) return
-
-        // Extraer el fósforo
-        const match = { ...sourceList[idx] }
-        sourceList.splice(idx, 1)
-
-        // Actualizar score al sacar de zona de equipo
-        if (from === 'A') state.scoreA = Math.max(0, state.scoreA - 1)
-        if (from === 'B') state.scoreB = Math.max(0, state.scoreB - 1)
-
-        // Insertar en la lista destino
-        const destList = getList(to)
-        if (destList) {
-            destList.push(match)
-        }
-
-        // Actualizar score al insertar en zona de equipo
-        if (to === 'A') state.scoreA++
-        if (to === 'B') state.scoreB++
+        zone: 'storage' as const,
+        slotIndex: null,
     }))
 }
 
+const [gameState, setGameState] = createStore<GameState>({
+    scoreA: 0,
+    scoreB: 0,
+    matches: generateInitialMatches(),
+    matchstickSize: null,
+})
+
 /**
- * Establece el tamaño de referencia del fósforo (medido desde el primer slot).
+ * Mueve un fósforo a una zona destino.
+ * Maneja cascada automática al retirar de un equipo.
  */
-export const setMatchstickSize = (size: { width: number, height: number } | null) => {
+export const moveMatchstick = (id: string, toZone: 'storage' | 'A' | 'B') => {
+    setGameState(produce((state) => {
+        const match = state.matches.find(m => m.id === id)
+        if (!match) return
+
+        const fromZone = match.zone
+        const fromSlot = match.slotIndex
+
+        if (fromZone === toZone) return
+
+        // Retirar del equipo origen + cascada
+        if (fromZone === 'A' || fromZone === 'B') {
+            state[fromZone === 'A' ? 'scoreA' : 'scoreB']--
+
+            if (fromSlot !== null) {
+                state.matches
+                    .filter(m => m.zone === fromZone && m.slotIndex !== null && m.slotIndex > fromSlot)
+                    .forEach(m => { m.slotIndex!-- })
+            }
+        }
+
+        // Mover al destino
+        if (toZone === 'storage') {
+            match.zone = 'storage'
+            match.slotIndex = null
+        } else {
+            const count = state.matches.filter(m => m.zone === toZone && m.slotIndex !== null).length
+            if (count >= 15) return
+
+            match.zone = toZone
+            match.slotIndex = count
+
+            state[toZone === 'A' ? 'scoreA' : 'scoreB']++
+        }
+    }))
+}
+
+export const setMatchstickSize = (size: { width: number; height: number } | null) => {
     setGameState('matchstickSize', size)
 }
 
-/**
- * Reinicia el estado del juego a su estado inicial.
- */
 export const resetGame = () => {
     setGameState({
         scoreA: 0,
         scoreB: 0,
-        storageMatches: generateInitialMatches(),
-        matchesA: [],
-        matchesB: [],
+        matches: generateInitialMatches(),
     })
 }
 
-// Exportar el estado reactivo (solo lectura)
 export { gameState }

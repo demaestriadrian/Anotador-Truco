@@ -1,19 +1,16 @@
-import { onMount, For, Show } from 'solid-js'
-import { gameState, setMatchstickSize } from '@/ui/store/gameStore'
-import MatchStick from './MatchStick'
+import { onMount, For } from 'solid-js'
+import { setMatchstickSize } from '@/ui/store/gameStore'
 
 interface PointSectionProps {
     team: 'A' | 'B'
 }
 
+const SLOT_ROTATIONS = [0, 90, 180, 270, 45]
+
 const PointSection = (props: PointSectionProps) => {
     let slotRef: HTMLDivElement | undefined
 
-    // Obtener los fósforos del equipo correspondiente
-    const matches = () => props.team === 'A' ? gameState.matchesA : gameState.matchesB
-
     onMount(() => {
-        // Solo medir si somos el equipo A para evitar duplicidad
         if (props.team !== 'A' || !slotRef) return
 
         const updateSize = () => {
@@ -25,7 +22,7 @@ const PointSection = (props: PointSectionProps) => {
 
         const observer = new ResizeObserver(updateSize)
         observer.observe(slotRef)
-        updateSize() // Medir inicialmente
+        updateSize()
     })
 
     return (
@@ -35,21 +32,17 @@ const PointSection = (props: PointSectionProps) => {
                     <div class="containerMatchstick" id={`${props.team.toLowerCase()}${groupId}`}>
                         <For each={[0, 1, 2, 3, 4]}>
                             {(slotIndex) => {
-                                // Índice global del fósforo: (groupId-1)*5 + slotIndex
                                 const globalIndex = (groupId - 1) * 5 + slotIndex
                                 const isRefSlot = props.team === 'A' && groupId === 1 && slotIndex === 0
 
                                 return (
                                     <div
                                         class="matchstickPosition"
+                                        data-team={props.team}
+                                        data-slot={globalIndex}
+                                        data-rotation={SLOT_ROTATIONS[slotIndex]}
                                         ref={(el) => { if (isRefSlot) slotRef = el }}
-                                    >
-                                        <Show when={matches()[globalIndex]}>
-                                            {(matchData) => (
-                                                <MatchStick data={matchData()} currentTeam={props.team} />
-                                            )}
-                                        </Show>
-                                    </div>
+                                    />
                                 )
                             }}
                         </For>

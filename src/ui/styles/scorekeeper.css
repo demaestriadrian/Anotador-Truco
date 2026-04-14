@@ -92,6 +92,7 @@
   width: 100%;
   flex: 1.5;
   position: relative;
+  overflow: visible;
 }
 
 section {
