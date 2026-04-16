@@ -1,51 +1,86 @@
-import { Match } from '../../domain/entities/Match';
-import { IGameView } from '../../domain/ports/interfaces';
+import { GameSession } from '@/core/domain/entities/GameSession'
+import { DEFAULT_RULES } from '@/core/domain/constants'
+import type { IGameCore } from '@/core/domain/ports/interfaces'
+import type { TeamId, GameRules, MoveResult, Move, MatchState, SessionState } from '@/core/domain/types'
 
-export class GameService {
-    private match: Match;
-    private view: IGameView;
+export class GameService implements IGameCore {
+    private session: GameSession
 
-    constructor(view: IGameView) {
-        this.view = view;
-        this.match = new Match();
-        this.initGame();
+    constructor(
+        teamAName: string = 'Nosotros',
+        teamBName: string = 'Ellos',
+        rules: GameRules = DEFAULT_RULES
+    ) {
+        this.session = new GameSession(teamAName, teamBName, rules)
     }
 
-    private initGame() {
-        this.refreshUI();
+    // ─── Partida actual ───
+
+    addPoint(team: TeamId): MoveResult {
+        const match = this.session.currentMatch
+        if (!match) throw new Error('No hay partida en curso')
+        return match.addPoint(team)
     }
 
-    addPoints(teamId: string, points: number): void {
-        this.match.addPoints(teamId, points);
-        const team = teamId === 'team_a' ? this.match.teamA : this.match.teamB;
-        this.view.updateScore(teamId, team.score);
-
-        this.checkWinner();
+    removePoint(team: TeamId): MoveResult {
+        const match = this.session.currentMatch
+        if (!match) throw new Error('No hay partida en curso')
+        return match.removePoint(team)
     }
 
-    resetGame(): void {
-        this.match.reset();
-        this.view.resetUI();
-        this.refreshUI();
+    undoLastMove(): MoveResult {
+        const match = this.session.currentMatch
+        if (!match) throw new Error('No hay partida en curso')
+        return match.undoLastMove()
     }
 
-    changeTeamName(teamId: string, newName: string): void {
-        const team = teamId === 'team_a' ? this.match.teamA : this.match.teamB;
-        team.setName(newName);
-        this.view.updateTeamName(teamId, newName);
+    // ─── Gestión de partidas ───
+
+    startNewMatch(): MatchState {
+        const match = this.session.startNewMatch()
+        return match.getState()
     }
 
-    private checkWinner(): void {
-        const winner = this.match.getWinner();
-        if (winner) {
-            this.view.showWinner(winner.name);
-        }
+    finishCurrentMatch(): void {
+        this.session.finishCurrentMatch()
     }
 
-    private refreshUI(): void {
-        this.view.updateTeamName(this.match.teamA.id, this.match.teamA.name);
-        this.view.updateTeamName(this.match.teamB.id, this.match.teamB.name);
-        this.view.updateScore(this.match.teamA.id, this.match.teamA.score);
-        this.view.updateScore(this.match.teamB.id, this.match.teamB.score);
+    // ─── Consultas ───
+
+    getCurrentMatch(): MatchState | null {
+        return this.session.currentMatch?.getState() ?? null
+    }
+
+    getMatchHistory(): MatchState[] {
+        return this.session.getMatchHistoryStates()
+    }
+
+    getMoveHistory(): Move[] {
+        const match = this.session.currentMatch
+        if (!match) return []
+        return [...match.moves]
+    }
+
+    getSessionState(): SessionState {
+        return this.session.getState()
+    }
+
+    // ─── Configuración ───
+
+    setTeamName(team: TeamId, name: string): void {
+        this.session.setTeamName(team, name)
+    }
+
+    setRules(rules: Partial<GameRules>): void {
+        this.session.setRules(rules)
+    }
+
+    resetSession(): void {
+        const state = this.session.getState()
+        this.session = new GameSession(
+            state.teamAName,
+            state.teamBName,
+            state.rules
+        )
     }
 }
