@@ -1,6 +1,16 @@
 import { Team } from './Team'
 import { DEFAULT_RULES } from '@/core/domain/constants'
-import type { GameRules, TeamId, Move, MoveResult, MatchState, MatchStatus } from '@/core/domain/types'
+import { resolveCallSequence } from '@/core/domain/scoring/callScoring'
+import type {
+    GameRules,
+    TeamId,
+    ScoreEntry,
+    ScoreEntryResult,
+    CallSequence,
+    Round,
+    MatchState,
+    MatchStatus,
+} from '@/core/domain/types'
 
 export class Match {
     readonly id: string
@@ -9,7 +19,9 @@ export class Match {
     private _rules: GameRules
     private _scoreA: number = 0
     private _scoreB: number = 0
-    private _moves: Move[] = []
+    private _entries: ScoreEntry[] = []
+    private _rounds: Round[] = []
+    private _currentRound: Round | null = null
     private _status: MatchStatus = 'playing'
     private _winner: TeamId | null = null
     private _startedAt: number
@@ -37,7 +49,9 @@ export class Match {
     get rules(): GameRules { return this._rules }
     get status(): MatchStatus { return this._status }
     get winner(): TeamId | null { return this._winner }
-    get moves(): ReadonlyArray<Move> { return this._moves }
+    get entries(): ReadonlyArray<ScoreEntry> { return this._entries }
+    get rounds(): ReadonlyArray<Round> { return this._rounds }
+    get currentRound(): Round | null { return this._currentRound }
 
     // ─── Queries ───
 
@@ -56,58 +70,111 @@ export class Match {
         else this._scoreB = value
     }
 
-    // ─── Comandos ───
+    // ─── Manos ───
 
-    addPoint(team: TeamId): MoveResult {
+    startNewRound(dealerTeam: TeamId): Round {
+        if (this._currentRound?.status === 'playing') {
+            this.finishCurrentRound()
+        }
+
+        const round: Round = {
+            id: crypto.randomUUID(),
+            roundNumber: this._rounds.length + 1,
+            dealerTeam,
+            envidoSequence: null,
+            trucoSequence: null,
+            scoreEntries: [],
+            status: 'playing',
+            startedAt: Date.now(),
+            finishedAt: null,
+        }
+
+        this._currentRound = round
+        return round
+    }
+
+    finishCurrentRound(): void {
+        if (!this._currentRound) return
+        this._currentRound.status = 'finished'
+        this._currentRound.finishedAt = Date.now()
+        this._rounds.push(this._currentRound)
+        this._currentRound = null
+    }
+
+    // ─── Anotaciones ───
+
+    applyManualScore(team: TeamId, points: number): ScoreEntryResult {
+        if (this._status === 'finished') {
+            return this.buildResult(false, 'game_finished')
+        }
+        if (points <= 0) {
+            return this.buildResult(false, 'invalid_points')
+        }
+
+        const entry: ScoreEntry = {
+            id: crypto.randomUUID(),
+            team,
+            points,
+            reason: 'manual',
+            timestamp: Date.now(),
+        }
+
+        return this.applyEntry(entry)
+    }
+
+    applyCallSequence(sequence: CallSequence, winnerTeam: TeamId): ScoreEntryResult {
         if (this._status === 'finished') {
             return this.buildResult(false, 'game_finished')
         }
 
-        const currentScore = this.getScore(team)
-        if (currentScore >= this._rules.scoreLimit) {
-            return this.buildResult(false, 'score_at_limit')
+        const partial = resolveCallSequence(
+            { ...sequence, winnerTeam },
+            { A: this._scoreA, B: this._scoreB },
+            this._rules,
+        )
+
+        const entry: ScoreEntry = {
+            ...partial,
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
         }
 
-        this.setScore(team, currentScore + 1)
-        this.recordMove('add', team)
-        this.checkWinner()
+        if (this._currentRound) {
+            if (sequence.category === 'Envido') {
+                this._currentRound.envidoSequence = { ...sequence, winnerTeam }
+            } else {
+                this._currentRound.trucoSequence = { ...sequence, winnerTeam }
+            }
+            this._currentRound.scoreEntries.push(entry)
+        }
 
-        return this.buildResult(true)
+        return this.applyEntry(entry)
     }
 
-    removePoint(team: TeamId): MoveResult {
-        if (this._status === 'finished') {
-            return this.buildResult(false, 'game_finished')
-        }
-
-        const currentScore = this.getScore(team)
-        if (currentScore <= 0) {
-            return this.buildResult(false, 'score_at_zero')
-        }
-
-        this.setScore(team, currentScore - 1)
-        this.recordMove('remove', team)
-
-        return this.buildResult(true)
-    }
-
-    undoLastMove(): MoveResult {
-        if (this._moves.length === 0) {
+    undoLastEntry(): ScoreEntryResult {
+        if (this._entries.length === 0) {
             return this.buildResult(false)
         }
 
-        const lastMove = this._moves[this._moves.length - 1]
+        const last = this._entries[this._entries.length - 1]
 
-        // Revertir: si fue 'add' restamos, si fue 'remove' sumamos
-        if (lastMove.action === 'add') {
-            this.setScore(lastMove.team, this.getScore(lastMove.team) - 1)
-        } else {
-            this.setScore(lastMove.team, this.getScore(lastMove.team) + 1)
+        this.setScore(last.team, this.getScore(last.team) - last.points)
+        this._entries.pop()
+
+        // Retirar también de la mano actual si corresponde
+        if (this._currentRound) {
+            const entries = this._currentRound.scoreEntries
+            const idx = entries.reduceRight((found, e: ScoreEntry, i) => found === -1 && e.id === last.id ? i : found, -1)
+            if (idx !== -1) {
+                this._currentRound.scoreEntries.splice(idx, 1)
+                if (last.callSequence?.category === 'Envido') {
+                    this._currentRound.envidoSequence = null
+                } else if (last.callSequence?.category === 'Truco') {
+                    this._currentRound.trucoSequence = null
+                }
+            }
         }
 
-        this._moves.pop()
-
-        // Si la partida estaba terminada, reabrirla
         if (this._status === 'finished') {
             this._status = 'playing'
             this._winner = null
@@ -127,7 +194,8 @@ export class Match {
             status: this._status,
             winner: this._winner,
             rules: { ...this._rules },
-            moves: [...this._moves],
+            entries: [...this._entries],
+            rounds: [...this._rounds, ...(this._currentRound ? [this._currentRound] : [])],
             startedAt: this._startedAt,
             finishedAt: this._finishedAt,
         }
@@ -135,13 +203,13 @@ export class Match {
 
     // ─── Privados ───
 
-    private recordMove(action: 'add' | 'remove', team: TeamId): void {
-        this._moves.push({
-            id: crypto.randomUUID(),
-            action,
-            team,
-            timestamp: Date.now(),
-        })
+    private applyEntry(entry: ScoreEntry): ScoreEntryResult {
+        const currentScore = this.getScore(entry.team)
+        const newScore = Math.min(currentScore + entry.points, this._rules.scoreLimit)
+        this.setScore(entry.team, newScore)
+        this._entries.push(entry)
+        this.checkWinner()
+        return this.buildResult(true)
     }
 
     private checkWinner(): void {
@@ -158,7 +226,7 @@ export class Match {
         this._finishedAt = Date.now()
     }
 
-    private buildResult(accepted: boolean, reason?: MoveResult['reason']): MoveResult {
+    private buildResult(accepted: boolean, reason?: ScoreEntryResult['reason']): ScoreEntryResult {
         return {
             accepted,
             reason,
@@ -171,3 +239,4 @@ export class Match {
         }
     }
 }
+

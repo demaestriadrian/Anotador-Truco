@@ -1,19 +1,35 @@
-import type { TeamId, GameRules, MoveResult, Move, MatchState, SessionState } from '@/core/domain/types'
+import type {
+    TeamId,
+    GameRules,
+    CallSequence,
+    ScoreEntry,
+    ScoreEntryResult,
+    Round,
+    MatchState,
+    SessionState,
+} from '@/core/domain/types'
+
+// Nota: ISyncPort usa ScoreEntryResult en lugar del obsoleto MoveResult
 
 export interface IGameCore {
-    // ─── Partida actual ───
-    addPoint(team: TeamId): MoveResult
-    removePoint(team: TeamId): MoveResult
-    undoLastMove(): MoveResult
-
     // ─── Gestión de partidas ───
     startNewMatch(): MatchState
     finishCurrentMatch(): void
 
+    // ─── Manos ───
+    startNewRound(dealerTeam: TeamId): Round
+    finishCurrentRound(): void
+
+    // ─── Anotaciones ───
+    applyManualScore(team: TeamId, points: number): ScoreEntryResult
+    applyCallSequence(sequence: CallSequence, winnerTeam: TeamId): ScoreEntryResult
+    undoLastEntry(): ScoreEntryResult
+
     // ─── Consultas ───
     getCurrentMatch(): MatchState | null
     getMatchHistory(): MatchState[]
-    getMoveHistory(): Move[]
+    getScoreHistory(): ScoreEntry[]
+    getRounds(): Round[]
     getSessionState(): SessionState
 
     // ─── Configuración ───
@@ -23,7 +39,7 @@ export interface IGameCore {
 }
 
 export interface ISyncPort {
-    sendMove(result: MoveResult): Promise<void>
-    onRemoteMove(handler: (result: MoveResult) => void): void
+    sendEntry(result: ScoreEntryResult): Promise<void>
+    onRemoteEntry(handler: (result: ScoreEntryResult) => void): void
     disconnect(): void
 }

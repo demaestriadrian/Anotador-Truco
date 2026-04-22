@@ -8,16 +8,58 @@ export interface GameRules {
     malasThreshold: number
 }
 
-export interface Move {
+// ─── Cantos ──────────────────────────────────────────────────────────────────
+
+/** Cantos de Truco: escalonados, no acumulativos */
+export type TrucoCallType = 'Truco' | 'Retruco' | 'ValeCuatro'
+
+/** Cantos de Envido: acumulativos cuando son aceptados */
+export type EnvidoCallType = 'Envido' | 'RealEnvido' | 'FaltaEnvido'
+
+export type CallType = TrucoCallType | EnvidoCallType
+export type CallCategory = 'Truco' | 'Envido'
+
+/** Un paso individual dentro de la secuencia: quién cantó qué */
+export interface CallStep {
+    type: CallType
+    callingTeam: TeamId
+}
+
+/**
+ * Secuencia completa de cantos de una categoría (Truco o Envido)
+ * con su resolución final y el equipo que cobra los puntos.
+ * accepted: true = Querido, false = No Querido
+ */
+export interface CallSequence {
+    category: CallCategory
+    steps: CallStep[]
+    accepted: boolean
+    winnerTeam: TeamId
+}
+
+// ─── ScoreEntry (reemplaza a Move) ───────────────────────────────────────────
+
+export type ScoreEntryReason =
+    | 'truco'
+    | 'envido'
+    | 'falta_envido'
+    | 'manual'
+
+/** Reemplaza a `Move`. Registra cuántos puntos, a qué equipo y por qué. */
+export interface ScoreEntry {
     id: string
-    action: 'add' | 'remove'
     team: TeamId
+    points: number
+    reason: ScoreEntryReason
+    callSequence?: CallSequence
+    winsMatch?: true
     timestamp: number
 }
 
-export interface MoveResult {
+/** Reemplaza a `MoveResult` */
+export interface ScoreEntryResult {
     accepted: boolean
-    reason?: 'game_finished' | 'score_at_zero' | 'score_at_limit'
+    reason?: 'game_finished' | 'score_at_zero' | 'score_at_limit' | 'invalid_points'
     scoreA: number
     scoreB: number
     status: MatchStatus
@@ -26,6 +68,28 @@ export interface MoveResult {
     teamBInMalas: boolean
 }
 
+// ─── Round (Mano) ─────────────────────────────────────────────────────────────
+
+export type RoundStatus = 'playing' | 'finished'
+
+/**
+ * Representa una mano: ronda donde se reparten cartas.
+ * El envido es opcional y siempre precede al truco.
+ */
+export interface Round {
+    id: string
+    roundNumber: number
+    dealerTeam: TeamId
+    envidoSequence: CallSequence | null
+    trucoSequence: CallSequence | null
+    scoreEntries: ScoreEntry[]
+    status: RoundStatus
+    startedAt: number
+    finishedAt: number | null
+}
+
+// ─── MatchState ───────────────────────────────────────────────────────────────
+
 export interface MatchState {
     id: string
     scoreA: number
@@ -33,7 +97,8 @@ export interface MatchState {
     status: MatchStatus
     winner: TeamId | null
     rules: GameRules
-    moves: Move[]
+    entries: ScoreEntry[]
+    rounds: Round[]
     startedAt: number
     finishedAt: number | null
 }
