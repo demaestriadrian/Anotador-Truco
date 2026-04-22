@@ -52,7 +52,7 @@ interface EnvidoResult {
 
 function calculateEnvidoPoints(
     sequence: CallSequence,
-    scores: { A: number; B: number },
+    scores: Record<TeamId, number>,
     rules: GameRules,
 ): EnvidoResult {
     const { steps, accepted } = sequence
@@ -78,7 +78,7 @@ function calculateEnvidoPoints(
 }
 
 function resolveFaltaEnvidoAccepted(
-    scores: { A: number; B: number },
+    scores: Record<TeamId, number>,
     rules: GameRules,
 ): EnvidoResult {
     const aInBuenas = scores.A >= rules.malasThreshold
@@ -122,7 +122,7 @@ function resolveEnvidoRejected(steps: CallStep[]): EnvidoResult {
  */
 export function resolveCallSequence(
     sequence: CallSequence,
-    scores: { A: number; B: number },
+    scores: Record<TeamId, number>,
     rules: GameRules,
 ): Omit<ScoreEntry, 'id' | 'timestamp'> {
     if (sequence.category === 'Truco') {
