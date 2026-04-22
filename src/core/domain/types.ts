@@ -6,6 +6,7 @@ export interface GameRules {
     scoreLimit: 15 | 30
     useMalas: boolean
     malasThreshold: number
+    useFlor: boolean
 }
 
 // ─── Cantos ──────────────────────────────────────────────────────────────────
@@ -16,8 +17,11 @@ export type TrucoCallType = 'Truco' | 'Retruco' | 'ValeCuatro'
 /** Cantos de Envido: acumulativos cuando son aceptados */
 export type EnvidoCallType = 'Envido' | 'RealEnvido' | 'FaltaEnvido'
 
-export type CallType = TrucoCallType | EnvidoCallType
-export type CallCategory = 'Truco' | 'Envido'
+/** Cantos de Flor: especiales, reemplazan al envido cuando aplican */
+export type FlorCallType = 'Flor' | 'ContraFlor' | 'ContraFlorAlResto'
+
+export type CallType = TrucoCallType | EnvidoCallType | FlorCallType
+export type CallCategory = 'Truco' | 'Envido' | 'Flor'
 
 /** Un paso individual dentro de la secuencia: quién cantó qué */
 export interface CallStep {
@@ -43,6 +47,9 @@ export type ScoreEntryReason =
     | 'truco'
     | 'envido'
     | 'falta_envido'
+    | 'flor'
+    | 'contra_flor'
+    | 'contra_flor_al_resto'
     | 'manual'
 
 /** Reemplaza a `Move`. Registra cuántos puntos, a qué equipo y por qué. */
@@ -81,6 +88,7 @@ export interface Round {
     roundNumber: number
     dealerTeam: TeamId
     envidoSequence: CallSequence | null
+    florSequence: CallSequence | null
     trucoSequence: CallSequence | null
     scoreEntries: ScoreEntry[]
     status: RoundStatus

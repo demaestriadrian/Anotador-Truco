@@ -2,6 +2,7 @@ import type {
     CallSequence,
     CallStep,
     EnvidoCallType,
+    FlorCallType,
     GameRules,
     ScoreEntry,
     TeamId,
@@ -29,6 +30,17 @@ const TRUCO_REJECTION_POINTS: Record<TrucoCallType, number> = {
 const ENVIDO_CALL_POINTS: Record<Exclude<EnvidoCallType, 'FaltaEnvido'>, number> = {
     Envido: 2,
     RealEnvido: 3,
+}
+
+const FLOR_ACCEPTED_POINTS: Record<Exclude<FlorCallType, 'ContraFlorAlResto'>, number> = {
+    Flor: 4, // Choque de flores querido (Con flor quiero)
+    ContraFlor: 6, // ContraFlor querida
+}
+
+const FLOR_REJECTED_POINTS: Record<FlorCallType, number> = {
+    Flor: 3, // Con flor me achico (Rechazo a la Flor inicial)
+    ContraFlor: 4, // Rechazo a la ContraFlor
+    ContraFlorAlResto: 6, // Rechazo a la ContraFlor al Resto
 }
 
 // ─── Truco ───────────────────────────────────────────────────────────────────
@@ -113,6 +125,41 @@ function resolveEnvidoRejected(steps: CallStep[]): EnvidoResult {
     return { points, winsMatch: false }
 }
 
+// ─── Flor ────────────────────────────────────────────────────────────────────
+
+function calculateFlorPoints(
+    sequence: CallSequence,
+    scores: Record<TeamId, number>,
+    rules: GameRules,
+): EnvidoResult {
+    const { steps, accepted } = sequence
+    if (steps.length === 0) return { points: 0, winsMatch: false }
+
+    const lastCall = steps.at(-1)!.type as FlorCallType
+
+    if (accepted) {
+        if (lastCall === 'ContraFlorAlResto') {
+            // Contra Flor Al Resto funciona igual que la Falta Envido en cuanto a lógica de puntos
+            return resolveFaltaEnvidoAccepted(scores, rules)
+        }
+        
+        if (lastCall === 'Flor' && steps.length === 1) {
+            // Solo una flor cantada y no respondida (el rival no tiene flor)
+            return { points: 3, winsMatch: false }
+        }
+
+        // Choque de flores querido (4) o ContraFlor querida (6)
+        return { 
+            points: FLOR_ACCEPTED_POINTS[lastCall as Exclude<FlorCallType, 'ContraFlorAlResto'>], 
+            winsMatch: false 
+        }
+    }
+
+    // No Querido (Achique)
+    // En la Flor, los puntos de rechazo dependen directamente de cuál fue el último canto
+    return { points: FLOR_REJECTED_POINTS[lastCall], winsMatch: false }
+}
+
 // ─── API pública ─────────────────────────────────────────────────────────────
 
 /**
@@ -131,6 +178,24 @@ export function resolveCallSequence(
             points: calculateTrucoPoints(sequence),
             reason: 'truco',
             callSequence: sequence,
+        }
+    }
+
+    if (sequence.category === 'Flor') {
+        const isContraFlorAlResto = sequence.steps.some(s => s.type === 'ContraFlorAlResto')
+        const isContraFlor = sequence.steps.some(s => s.type === 'ContraFlor') && !isContraFlorAlResto
+        const { points, winsMatch } = calculateFlorPoints(sequence, scores, rules)
+
+        return {
+            team: sequence.winnerTeam,
+            points,
+            reason: isContraFlorAlResto 
+                ? 'contra_flor_al_resto' 
+                : isContraFlor 
+                    ? 'contra_flor' 
+                    : 'flor',
+            callSequence: sequence,
+            ...(winsMatch && { winsMatch: true }),
         }
     }
 
