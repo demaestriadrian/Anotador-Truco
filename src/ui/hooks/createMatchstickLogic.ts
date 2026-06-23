@@ -1,12 +1,17 @@
 import { onMount, onCleanup } from 'solid-js'
 import { Draggable } from 'gsap/all'
 import gsap from 'gsap'
-import { moveMatchstick, type MatchStickData } from '@/ui/store/gameStore'
+import { moveMatchstick, type MatchStickData } from '@/ui/store/presentationStore'
+import { sumarPunto, restarPunto } from '@/infrastructure/adapters/solidGameController'
+import type { TeamId } from '@/core/domain/constants'
 import type { MatchstickAnimationControls } from './createMatchstickAnimation'
 
 gsap.registerPlugin(Draggable)
 
 type MatchstickZone = 'A' | 'B' | 'storage'
+
+// Mapea la zona visual del equipo ('A'/'B') al id de dominio del core.
+const mapTeam = (zone: 'A' | 'B'): TeamId => (zone === 'A' ? 'team_a' : 'team_b')
 
 /**
  * Inicializa la lógica de drag & drop de un fósforo.
@@ -15,7 +20,7 @@ type MatchstickZone = 'A' | 'B' | 'storage'
  * - Crear el Draggable de GSAP para manejar el arrastre.
  * - Determinar la zona de destino al soltar (hitTest).
  * - Mover lógicamente el fósforo en el DOM (re-parentar al contenedor destino).
- * - Comunicar cambios al gameStore.
+ * - Mover el fósforo en el store de presentación y despachar los comandos al core.
  * - Delegar TODA la animación al módulo createMatchstickAnimation.
  *
  * NO calcula posiciones, deltas, ni rotaciones. Flip se encarga de eso.
@@ -101,8 +106,16 @@ export const createMatchstickLogic = (
 
         // 3. Animar con Flip desde la posición anterior a la nueva
         animation.animateFlipTo(state, () => {
-            // 4. Al completar la animación, actualizar el store
+            // 4. Al completar la animación, mover el fósforo visual...
             moveMatchstick(data.id, currentZone, targetTeam)
+
+            // ...y despachar el/los comando(s) al core para mantenerlo consistente.
+            // Si venía de otro equipo: resta a ese equipo y suma al destino.
+            if (currentZone === 'A' || currentZone === 'B') {
+                restarPunto(mapTeam(currentZone))
+            }
+            // Tanto si venía del storage como de otro equipo, suma al destino.
+            sumarPunto(mapTeam(targetTeam))
         })
     }
 
@@ -129,7 +142,14 @@ export const createMatchstickLogic = (
 
             // 3. Animar con Flip hacia la posición del storage
             animation.animateReturnToStorage(state, () => {
+                // Mover el fósforo visual de vuelta al depósito...
                 moveMatchstick(data.id, currentZone, 'storage')
+
+                // ...y despachar el comando al core: restar el punto al equipo de origen.
+                // En esta rama el fósforo venía de un equipo (no del storage).
+                if (currentZone === 'A' || currentZone === 'B') {
+                    restarPunto(mapTeam(currentZone))
+                }
             })
         }
     }

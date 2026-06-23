@@ -1,5 +1,5 @@
 import { positionRandomX, positionRandomY } from '@/ui/utils'
-import type { MatchStickData } from '@/ui/store/gameStore'
+import type { MatchStickData } from '@/ui/store/presentationStore'
 import { createMatchstickAnimation } from '@/ui/hooks/createMatchstickAnimation'
 import { createMatchstickLogic } from '@/ui/hooks/createMatchstickLogic'
 

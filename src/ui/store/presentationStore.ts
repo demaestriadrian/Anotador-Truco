@@ -7,10 +7,9 @@ export interface MatchStickData {
     variationRotation: number;
 }
 
-// Estado completo del juego
-interface GameState {
-    scoreA: number
-    scoreB: number
+// Estado de PRESENTACIÓN: solo lo visual de los fósforos.
+// El puntaje vive en el core (ver `solidGameController`), no acá.
+interface PresentationState {
     storageMatches: MatchStickData[]
     matchesA: MatchStickData[]
     matchesB: MatchStickData[]
@@ -27,10 +26,8 @@ const generateInitialMatches = (): MatchStickData[] => {
     }));
 };
 
-// Store reactivo de SolidJS
-const [gameState, setGameState] = createStore<GameState>({
-    scoreA: 0,
-    scoreB: 0,
+// Store reactivo de SolidJS (solo presentación)
+const [presentationState, setPresentationState] = createStore<PresentationState>({
     storageMatches: generateInitialMatches(),
     matchesA: [],
     matchesB: [],
@@ -41,14 +38,15 @@ const [gameState, setGameState] = createStore<GameState>({
 
 /**
  * Mueve un fósforo entre zonas (storage, A, B, null).
- * Actualiza scores automáticamente al mover hacia/desde zonas de equipo.
+ * SOLO mueve el fósforo entre los arrays de presentación; el puntaje
+ * lo maneja el core a través de los comandos despachados en el drag.
  */
 export const moveMatchstick = (
     id: string,
     from: 'storage' | 'A' | 'B' | null,
     to: 'storage' | 'A' | 'B' | null,
 ) => {
-    setGameState(produce((state) => {
+    setPresentationState(produce((state) => {
         if (from === to) return; // Sin cambios
 
         // Buscar el fósforo en la lista de origen
@@ -69,19 +67,11 @@ export const moveMatchstick = (
         const match = { ...sourceList[idx] }
         sourceList.splice(idx, 1)
 
-        // Actualizar score al sacar de zona de equipo
-        if (from === 'A') state.scoreA = Math.max(0, state.scoreA - 1)
-        if (from === 'B') state.scoreB = Math.max(0, state.scoreB - 1)
-
         // Insertar en la lista destino
         const destList = getList(to)
         if (destList) {
             destList.push(match)
         }
-
-        // Actualizar score al insertar en zona de equipo
-        if (to === 'A') state.scoreA++
-        if (to === 'B') state.scoreB++
     }))
 }
 
@@ -89,16 +79,14 @@ export const moveMatchstick = (
  * Establece el tamaño de referencia del fósforo (medido desde el primer slot).
  */
 export const setMatchstickSize = (size: { width: number, height: number } | null) => {
-    setGameState('matchstickSize', size)
+    setPresentationState('matchstickSize', size)
 }
 
 /**
- * Reinicia el estado del juego a su estado inicial.
+ * Reinicia el estado de presentación a su estado inicial.
  */
-export const resetGame = () => {
-    setGameState({
-        scoreA: 0,
-        scoreB: 0,
+export const resetPresentation = () => {
+    setPresentationState({
         storageMatches: generateInitialMatches(),
         matchesA: [],
         matchesB: [],
@@ -106,4 +94,4 @@ export const resetGame = () => {
 }
 
 // Exportar el estado reactivo (solo lectura)
-export { gameState }
+export { presentationState }

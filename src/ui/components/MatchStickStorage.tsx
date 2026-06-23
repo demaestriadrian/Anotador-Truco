@@ -1,22 +1,23 @@
 import { For } from 'solid-js'
-import { gameState } from '@/ui/store/gameStore'
+import { presentationState } from '@/ui/store/presentationStore'
 import MatchStick from './MatchStick'
 
 const MatchStickStorage = () => {
     return (
         <div
+            id="matchstick-storage"
             class="matchstickStorage"
             style={{
-                opacity: gameState.matchstickSize ? 1 : 0,
+                opacity: presentationState.matchstickSize ? 1 : 0,
                 transition: 'opacity 0.5s ease-in'
             }}
         >
-            <For each={gameState.storageMatches}>
+            <For each={presentationState.storageMatches}>
                 {(match) => (
                     <MatchStick
                         data={match}
                         isStoraged={true}
-                        overrideSize={gameState.matchstickSize || undefined}
+                        overrideSize={presentationState.matchstickSize || undefined}
                         currentTeam="storage"
                     />
                 )}

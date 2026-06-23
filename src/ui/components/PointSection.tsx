@@ -1,5 +1,5 @@
 import { onMount, For, Show } from 'solid-js'
-import { gameState, setMatchstickSize } from '@/ui/store/gameStore'
+import { presentationState, setMatchstickSize } from '@/ui/store/presentationStore'
 import MatchStick from './MatchStick'
 
 interface PointSectionProps {
@@ -10,7 +10,7 @@ const PointSection = (props: PointSectionProps) => {
     let slotRef: HTMLDivElement | undefined
 
     // Obtener los fósforos del equipo correspondiente
-    const matches = () => props.team === 'A' ? gameState.matchesA : gameState.matchesB
+    const matches = () => props.team === 'A' ? presentationState.matchesA : presentationState.matchesB
 
     onMount(() => {
         // Solo medir si somos el equipo A para evitar duplicidad

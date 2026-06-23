@@ -1,5 +1,6 @@
 import { createEffect, on } from 'solid-js'
-import { gameState } from '@/ui/store/gameStore'
+import { gameState, cambiarNombre } from '@/infrastructure/adapters/solidGameController'
+import { presentationState } from '@/ui/store/presentationStore'
 import PointSection from './PointSection'
 import MatchStickStorage from './MatchStickStorage'
 import TeamName from './TeamName'
@@ -9,15 +10,13 @@ import { Flip } from 'gsap/all'
 
 gsap.registerPlugin(Flip)
 
-const MAX_SCORE = 30
-
 const ScoreKeeper = () => {
     let flipState: Flip.FlipState | null = null
 
     // Efecto reactivo: se ejecuta cuando matchesA o matchesB cambian
     // Captura el estado previo de Flip y anima la transición
     createEffect(on(
-        () => [gameState.matchesA.length, gameState.matchesB.length],
+        () => [presentationState.matchesA.length, presentationState.matchesB.length],
         () => {
             const targets = '.matchstick-item'
 
@@ -47,20 +46,28 @@ const ScoreKeeper = () => {
     return (
         <div class="scorekeeper">
             <header class="score-header">
-                {/* Referencia Score A */}
-                <div class="score-reference"><span>{gameState.scoreA}</span></div>
+                {/* Referencia Score A (del dominio) */}
+                <div class="score-reference"><span>{gameState.teams.team_a.score}</span></div>
 
                 {/* Nombre Equipo A */}
-                <TeamName teamId="A" placeholder="NOSOTROS" />
+                <TeamName
+                    teamId="A"
+                    placeholder="NOSOTROS"
+                    onNameChange={(name) => cambiarNombre('team_a', name)}
+                />
 
-                {/* Puntaje Máximo */}
-                <div class="max-score">{MAX_SCORE}</div>
+                {/* Puntaje Máximo (límite del dominio) */}
+                <div class="max-score">{gameState.limit}</div>
 
                 {/* Nombre Equipo B */}
-                <TeamName teamId="B" placeholder="ELLOS" />
+                <TeamName
+                    teamId="B"
+                    placeholder="ELLOS"
+                    onNameChange={(name) => cambiarNombre('team_b', name)}
+                />
 
-                {/* Referencia Score B */}
-                <div class="score-reference"><span>{gameState.scoreB}</span></div>
+                {/* Referencia Score B (del dominio) */}
+                <div class="score-reference"><span>{gameState.teams.team_b.score}</span></div>
             </header>
 
             <Separator orientation="horizontal" />
