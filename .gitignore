@@ -22,5 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-pnpm-lock.yaml
+
+# graphify - grafo de conocimiento (artefacto local generado)
+graphify-out/
 
