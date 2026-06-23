@@ -1,95 +1,118 @@
-# 🗺️ Roadmap de Evolución del Proyecto
+# 🗺️ Roadmap del Anotador de Truco
 
-Este documento detalla la visión a futuro para transformar el **Anotador de Truco** de una herramienta local a una plataforma multijugador en tiempo real.
+Este documento muestra **dónde estamos** y **qué queremos lograr**. Para la historia de *lo que ya
+se hizo* (evolución de stacks según Git) ver [`HISTORIAL.md`](./HISTORIAL.md); para el detalle del
+refactor hexagonal recién terminado ver [`plan.md`](./plan.md).
 
-## 🎯 Visión General
-El objetivo final es permitir que dos personas, cada una desde su propio dispositivo móvil, puedan sincronizar una partida de Truco en tiempo real, manteniendo la experiencia táctil de "arrastrar los fósforos".
+## 🎯 Visión
 
----
-
-## 📅 Fases del Desarrollo
-
-### Fase 1: Consolidación UI & Lógica Local (Estado Actual)
-- [x] Implementar Drag & Drop con GSAP.
-- [x] Refactorización a Arquitectura Hexagonal y Limpieza de Código.
-- [ ] **Motor de Reglas**: Implementar las reglas completas del Truco en `src/core/domain` (Flor, Envido, Truco, Validaciones de puntos).
-- [ ] **Persistencia Local**: Guardar el estado de la partida en `localStorage` por si se recarga la página.
-
-### Fase 2: Preparación para la Escalabilidad
-- [ ] **State Management**: Introducir un gestor de estado global (ej. Zustand o XState) dentro de `core/application` para desacoplar totalmente el estado del juego de la vista. La vista solo debe "reaccionar" al estado.
-- [ ] **Game Loop**: Refinar el bucle de juego para manejar turnos y eventos de manera secuencial.
-
-### Fase 3: Backend & Sincronización (Multiplayer)
-- [ ] **Backend Server**: Crear un servidor de alto rendimiento con **Bun** y **Hono**.
-- [ ] **WebSockets**: Utilizar **WebSockets nativos de Bun** (vía Hono) para máxima velocidad.
-    - Eventos: `matchstick_moved`, `points_added`, `game_reset`.
-- [ ] **Rooms/Salas**: Lógica para crear salas de juego mediante códigos QR o enlaces compartibles.
-- [ ] **Sincronización Optimista**: La UI se actualiza inmediatamente y se corrige si el servidor rechaza la acción (para evitar lag percibido).
-
-### Fase 4: Experiencia Móvil & PWA
-- [ ] **Touch Events**: Optimizar la sensibilidad de los fósforos en pantallas táctiles.
-- [ ] **PWA (Progressive Web App)**: Permitir que la app se instale en el teléfono.
-- [ ] **Haptics**: Agregar vibración al soltar un fósforo para feedback físico.
+Transformar el anotador de un marcador táctil local a una **plataforma de Truco multijugador en
+tiempo real**: dos personas, cada una en su dispositivo, sincronizando la misma partida, sin perder
+la experiencia de "arrastrar los fósforos". El **core de reglas desacoplado** es la pieza que hace
+esto posible: hoy corre en el navegador; mañana, el mismo core corre en el servidor.
 
 ---
 
-## 🏗️ Evolución de la Arquitectura
+## 📍 Estado actual — Junio 2026  ·  **← ESTÁS ACÁ**
 
-### 1. Estructura Actual (Cliente Monolítico)
-Toda la lógica vive en el navegador del usuario.
+Marcador local funcionando sobre **arquitectura hexagonal con el core como autoridad**.
 
+- [x] UI en **SolidJS** con drag & drop de fósforos (**GSAP** Draggable + Flip).
+- [x] **Core hexagonal desacoplado** del framework:
+  - [x] Dominio puro: `Match` / `Team`, puntos, **buenas/malas**, **límite 15/30**, ganador.
+  - [x] `GameEngine` con API **comando-in / snapshot-out / subscribe** (contratos serializables).
+  - [x] Adaptador SolidJS (`solidGameController`) que espeja el estado vía `reconcile`.
+- [x] **La UI responde al core**: el drag despacha comandos (`sumarPunto`/`restarPunto`) y la vista
+  refleja el snapshot del engine.
+- [x] Tooling: **pnpm**, build de producción (`tsc` + Vite) en verde.
+
+> El core ya está listo para crecer: agregar reglas = agregar comandos/eventos; sincronizar = enviar
+> los mismos comandos por la red. No hay que reescribir el dominio.
+
+---
+
+## 🚀 Fases hacia adelante
+
+### Fase A — Completar el marcador local _(corto plazo)_
+El core ya soporta casi todo; falta exponerlo en la UI y endurecerlo.
+- [ ] **Selector de límite 15/30** en la UI (el core ya tiene `cambiarLimite`).
+- [ ] **UI de ganador / fin de partida** (`winner` y `finished` ya viven en el snapshot).
+- [ ] **Fósforos 100% derivados del core**: que el conteo de fósforos se reconstruya desde el
+  puntaje del core (hoy la presentación lo acompaña, no lo deriva).
+- [ ] **Persistencia local** en `localStorage` (sobrevivir a recargas).
+- [ ] **Pulir errores visuales** pendientes de las animaciones Flip.
+- [ ] **Tests de dominio con Vitest** (el `GameEngine` es puro → fácil de testear:
+  clamp de puntos, transición malas→buenas, ganador a 15 y a 30).
+
+### Fase B — Reglas del Truco _(mediano plazo)_
+Extender el dominio de "marcador" a "motor de reglas", aprovechando la base hexagonal.
+- [ ] **Envido**: Envido / Real Envido / Falta Envido.
+- [ ] **Truco**: Truco / Retruco / Vale Cuatro.
+- [ ] **Flor**: Flor / Contraflor.
+- [ ] **Gestión de mano y turnos** (game loop secuencial).
+- [ ] Modelado como nuevos `Command`/eventos del dominio, sin romper el marcador existente.
+
+### Fase C — Backend & sincronización _(Cloudflare + Hono)_
+El objetivo grande: dos instancias en tiempo real reusando el core.
+- [ ] **Servidor con Hono sobre Cloudflare Workers**.
+- [ ] **Tiempo real con Durable Objects + WebSockets** (patrón de CF): el `GameEngine` corre dentro
+  del Durable Object como autoridad compartida.
+- [ ] **Reusar el core tal cual**: los mismos `Command` y `GameSnapshot` viajan por el socket.
+- [ ] **Salas (rooms)** por código o QR compartible.
+- [ ] **Sincronización optimista**: la UI aplica el comando local y corrige si el server lo rechaza.
+- [ ] **Monorepo con pnpm workspaces**: `client` / `server` / `shared` (el dominio reutilizable).
+
+### Fase D — Experiencia móvil & PWA _(largo plazo)_
+- [ ] **Touch events** afinados para los fósforos en pantallas táctiles.
+- [ ] **PWA** instalable en el teléfono.
+- [ ] **Haptics**: vibración al soltar un fósforo.
+
+---
+
+## 🏗️ Evolución de la arquitectura
+
+### Hoy — Cliente monolítico (core en el navegador)
 ```mermaid
 graph LR
-    UI[Interfaz UI] --> Services[App Services]
-    Services --> Domain[Reglas de Dominio]
+    UI["UI SolidJS"] -->|comando| Engine["GameEngine (core)"]
+    Engine -->|snapshot| UI
+    Engine --> Domain["Dominio: Match / Team"]
 ```
 
-### 2. Estructura Futura (Cliente-Servidor Sincronizado)
-Migraremos a una arquitectura donde el "Dominio" es compartido o duplicado para validación, y el estado reside en el servidor.
-
+### Mañana — Cliente-servidor sincronizado (Cloudflare)
+El **mismo core** se mueve al servidor; el cliente pasa a ser una vista optimista.
 ```mermaid
 graph TD
-    ClientA[Cliente A (Móvil)] <-->|WebSocket| Server[Backend (Bun + Hono)]
-    ClientB[Cliente B (Móvil)] <-->|WebSocket| Server
-    
-    subgraph "Cliente"
-        UI --> ClientState[Gestor de Estado]
-        ClientState --> UI
-    end
-    
-    subgraph "Servidor"
-        Server --> GameInstance[Instancia de Juego]
-        GameInstance --> Rules[Reglas de Dominio]
-    end
+    ClientA["Cliente A (móvil)"] <-->|WebSocket| DO["Durable Object - Hono"]
+    ClientB["Cliente B (móvil)"] <-->|WebSocket| DO
+    DO --> Engine["GameEngine compartido"]
+    Engine --> Domain["Dominio (reglas reutilizables)"]
 ```
 
-### 📂 Estructura de Carpetas (Proyección)
-
-Cuando se implemente el backend, se sugiere una estructura de **Monorepo**:
-
+### 📂 Estructura proyectada (monorepo pnpm)
 ```
 /
 ├── packages/
-│   ├── client/           # (El proyecto actual)
-│   │   ├── src/ui/       # Componentes Visuales
-│   │   └── src/store/    # Zustand/Redux (Cliente)
-│   │
-│   ├── server/           # Nuevo Backend
-│   │   ├── src/gateway/  # WebSockets
-│   │   └── src/game/     # Lógica de juego en servidor
-│   │
-│   └── shared/           # Código Compartido (Types, Enums, Reglas puras)
-│       └── src/domain/   # Las reglas del truco (¡Reutilizables!)
+│   ├── client/          # App actual (SolidJS)
+│   │   ├── src/ui/       # Componentes visuales + adaptador SolidJS
+│   │   └── src/infrastructure/
+│   ├── server/          # Backend Hono en Cloudflare Workers
+│   │   └── src/         # Durable Object que hospeda el GameEngine
+│   └── shared/          # Código compartido
+│       └── core/        # Dominio + GameEngine + tipos (¡el core de hoy!)
 ```
+> El `src/core/` actual es exactamente lo que migrará a `shared/core/`. Por eso se construyó sin
+> dependencias de SolidJS ni del DOM.
 
-## 🛠️ Tecnologías Futuras Sugeridas
+## 🛠️ Decisiones de stack
 
-| Componente | Tecnología Sugerida | Razón |
+| Componente | Elección | Razón |
 | :--- | :--- | :--- |
-| **Backend** | **Bun + Hono** | Rendimiento superior, arranque instantáneo y simplicidad (Standard Web Objects). |
-| **Transporte** | **Bun WebSockets** | Implementación nativa de bajo nivel, mucho más rápida que Socket.io. |
-| **Estado Cliente** | **Zustand** | Ligero, simple y perfecto para gestionar estados de juego en React/Vanilla. |
-| **Shared Code** | **PNPM Workspaces** | Para compartir las interfaces `ITrucoGame` entre front y back. |
+| **UI** | SolidJS + GSAP | Reactividad fina; animaciones de fósforos con Flip/Draggable. |
+| **Core** | TS puro (hexagonal) | Agnóstico al framework y al runtime → reutilizable en cliente y server. |
+| **Gestor** | **pnpm** | Compatible con npm/Cloudflare; ideal para workspaces del futuro monorepo. |
+| **Backend** | **Hono** | Runtime-agnóstico (corre en Cloudflare Workers, Node, Deno o Bun). |
+| **Despliegue / tiempo real** | **Cloudflare Workers + Durable Objects** | WebSockets y estado compartido por sala en el edge. |
 
 ---
-_Este documento sirve como guía norte para las próximas iteraciones del proyecto._
+_Norte del proyecto: un core de reglas sólido y desacoplado que sirva igual en local y en la nube._
