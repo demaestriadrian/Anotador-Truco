@@ -24,7 +24,7 @@ Es una SPA puramente cliente (sin backend por ahora).
 | Framework UI | **SolidJS 1.9** (JSX reactivo, `createStore`, `createSignal`, `createEffect`) |
 | Lenguaje | **TypeScript 5** (modo `strict`, sin emit — `noEmit`) |
 | Bundler / dev server | **Vite 7** (`vite-plugin-solid`, `vite-tsconfig-paths`) |
-| Animaciones | **GSAP 3.13** — plugins `Draggable` (arrastre) y `Flip` (transiciones de layout) |
+| Animaciones | **GSAP 3.13** — plugin `Draggable` (arrastre) + tweens `gsap.to/set` (posicionamiento puro, sin Flip) |
 | Utilidades matemáticas | **D3 7** (`randomBates`, `randomLogNormal` para dispersión aleatoria de fósforos) |
 | Gestor de paquetes | **pnpm** (existe `pnpm-lock.yaml`) |
 
@@ -73,9 +73,10 @@ src/
     │   ├── TeamName.tsx           # Input de nombre → cambiarNombre()
     │   └── Separator.tsx          # Separadores visuales (línea / cinta)
     ├── hooks/
-    │   ├── createMatchstickLogic.ts     # Drag & drop: hitTest, re-parent, despacha comandos al core
-    │   └── createMatchstickAnimation.ts # Animaciones GSAP Flip (mover/volver/quitar)
-    ├── store/presentationStore.ts # Estado de PRESENTACIÓN (fósforos): arrays + tamaño (sin score)
+    │   ├── createMatchstickLogic.ts     # Drag & drop: hitTest, getSlotPosition, despacha comandos al core
+    │   └── createMatchstickAnimation.ts # Animaciones GSAP puras: setPosition, animateToPosition, Draggable
+    ├── store/presentationStore.ts # Estado de PRESENTACIÓN: array único `matches[]` con zone/slotIndex
+    ├── constants.ts               # ANIMATION_DURATION (duraciones de animación en segundos)
     ├── styles/                    # CSS modular (index importa el resto)
     └── utils/index.ts             # Posiciones aleatorias (D3) + tipos
 ```
@@ -87,8 +88,8 @@ src/
   Solid sincronizado con `reconcile`). Acciones: `sumarPunto`, `restarPunto`, `cambiarNombre`,
   `cambiarLimite`, `reiniciar` → cada una despacha un `Command` al engine.
 - **Presentación**: `src/ui/store/presentationStore.ts` (`presentationState`) mantiene solo lo visual
-  de los fósforos (`storageMatches`, `matchesA`, `matchesB`, `matchstickSize`). `moveMatchstick(id,
-  from, to)` mueve fósforos entre arrays; **no** toca el puntaje.
+  de los fósforos: array único `matches: MatchStickData[]` donde cada elemento tiene `zone` (`'storage'|'A'|'B'`)
+  y `slotIndex`. `moveMatchstick(id, toZone)` actualiza zone/slotIndex con lógica de cascada; **no** toca el puntaje.
 
 ### 🔌 Por qué comando-in / snapshot-out
 
@@ -97,15 +98,15 @@ el futuro backend (despachar local hoy = enviar por WebSocket mañana). Ver `ROA
 
 ## 🎯 Cómo funciona el drag & drop (clave del proyecto)
 
-1. Cada `MatchStick` crea un `Draggable` de GSAP (`createMatchstickLogic`).
-2. Al soltar (`onRelease`), `hitTest` decide la zona destino (`#section-A` / `#section-B`).
-3. Patrón de animación **Flip**: se **captura** el estado visual *antes* de mover el nodo en el
-   DOM, se **re-parenta** el elemento al slot destino (o al depósito), y luego `Flip.from`
-   anima desde la posición vieja a la nueva. Así no se calculan deltas a mano.
-4. Al terminar la animación se actualiza la presentación (`moveMatchstick`) **y se despacha el comando
-   al core** (`sumarPunto`/`restarPunto`, mapeando `'A'→'team_a'`, `'B'→'team_b'`). El puntaje sale del core.
-5. `PointSection` (solo el equipo A) mide el tamaño de un slot con `ResizeObserver` y lo guarda en
-   `matchstickSize` para que los fósforos del depósito tengan el tamaño correcto.
+Los fósforos **siempre permanecen en el DOM del storage** (`#matchstick-storage`); nunca se
+re-parentan. El posicionamiento visual se logra únicamente con GSAP transforms (`x`/`y`/`width`/`height`/`rotation`).
+
+1. Cada `MatchStick` genera su posición aleatoria en el storage (`positionRandomX/Y`) y crea controles de animación (`createMatchstickAnimation`).
+2. En `onMount`, `createMatchstickLogic` calcula la posición inicial y hace `setPosition` instantáneo; luego registra el `Draggable`.
+3. Al soltar (`onRelease`), `hitTest` decide la zona destino (`#section-A` / `#section-B`).
+4. Si hay zona válida: se llama `moveMatchstick(id, toZone)` en el store de presentación y se despachan los comandos al core (`sumarPunto`/`restarPunto`).
+5. Un `createEffect(on(..., { defer: true }))` observa el cambio de `zone`/`slotIndex` en el store y calcula la posición del slot destino con `getSlotPosition` (vía `getBoundingClientRect` del div `.matchstickPosition[data-team][data-slot]`), luego anima con `animateToPosition`.
+6. `PointSection` (solo equipo A) mide el primer slot con `ResizeObserver` y lo guarda en `matchstickSize`; ese tamaño determina el ancho/alto de todos los fósforos.
 
 ## 📐 Convenciones
 
@@ -118,10 +119,11 @@ el futuro backend (despachar local hoy = enviar por WebSocket mañana). Ver `ROA
 
 ## 🐞 Notas y estado
 
-- El bug histórico del retorno al depósito (`#matchstick-storage`) está **corregido**:
-  `MatchStickStorage.tsx` ahora expone `id="matchstick-storage"`.
-- Pendiente (ver `ROADMAP.md` Fase A): pulir glitches visuales de las animaciones Flip; derivar los
-  fósforos 100% del puntaje del core; UI de ganador y selector de límite 15/30.
+- El salto visual al finalizar la animación (bug del Flip approach) está **resuelto**: al no
+  re-parentar ni usar `Flip`, los fósforos se posicionan suavemente con `gsap.to` puro.
+- `PointSection` ahora expone slots vacíos con `data-team`, `data-slot`, `data-rotation` (sin renderizar `MatchStick` adentro).
+  `MatchStickStorage` itera **todos** los fósforos (no solo los del storage).
+- Pendiente (ver `ROADMAP.md` Fase A): derivar los fósforos 100% del puntaje del core; UI de ganador y selector de límite 15/30.
 - `README.md` todavía describe la arquitectura anterior (vanilla/hexagonal). Tomalo como contexto
   histórico; la fuente de verdad es este `CLAUDE.md` + `ROADMAP.md`.
 

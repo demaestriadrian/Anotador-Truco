@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
+      "port": 5500
+    },
+    {
+      "name": "dev-h (expuesto en red)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev-h"],
+      "port": 5500
+    },
+    {
+      "name": "preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["preview"],
+      "port": 4173
+    }
+  ]
+}

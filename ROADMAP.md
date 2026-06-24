@@ -17,13 +17,15 @@ esto posible: hoy corre en el navegador; mañana, el mismo core corre en el serv
 
 Marcador local funcionando sobre **arquitectura hexagonal con el core como autoridad**.
 
-- [x] UI en **SolidJS** con drag & drop de fósforos (**GSAP** Draggable + Flip).
+- [x] UI en **SolidJS** con drag & drop de fósforos (**GSAP Draggable** + posicionamiento puro `gsap.to` sin Flip).
 - [x] **Core hexagonal desacoplado** del framework:
   - [x] Dominio puro: `Match` / `Team`, puntos, **buenas/malas**, **límite 15/30**, ganador.
   - [x] `GameEngine` con API **comando-in / snapshot-out / subscribe** (contratos serializables).
   - [x] Adaptador SolidJS (`solidGameController`) que espeja el estado vía `reconcile`.
 - [x] **La UI responde al core**: el drag despacha comandos (`sumarPunto`/`restarPunto`) y la vista
   refleja el snapshot del engine.
+- [x] **Sin salto visual al animar**: fósforos siempre en el DOM del storage, posicionados con GSAP
+  transforms; `createEffect` reactivo dispara la animación cuando cambia `zone`/`slotIndex`.
 - [x] Tooling: **pnpm**, build de producción (`tsc` + Vite) en verde.
 
 > El core ya está listo para crecer: agregar reglas = agregar comandos/eventos; sincronizar = enviar
@@ -40,7 +42,7 @@ El core ya soporta casi todo; falta exponerlo en la UI y endurecerlo.
 - [ ] **Fósforos 100% derivados del core**: que el conteo de fósforos se reconstruya desde el
   puntaje del core (hoy la presentación lo acompaña, no lo deriva).
 - [ ] **Persistencia local** en `localStorage` (sobrevivir a recargas).
-- [ ] **Pulir errores visuales** pendientes de las animaciones Flip.
+- [x] ~~Pulir errores visuales de las animaciones Flip~~ — resuelto al eliminar Flip del drag.
 - [ ] **Tests de dominio con Vitest** (el `GameEngine` es puro → fácil de testear:
   clamp de puntos, transición malas→buenas, ganador a 15 y a 30).
 
@@ -108,7 +110,7 @@ graph TD
 
 | Componente | Elección | Razón |
 | :--- | :--- | :--- |
-| **UI** | SolidJS + GSAP | Reactividad fina; animaciones de fósforos con Flip/Draggable. |
+| **UI** | SolidJS + GSAP | Reactividad fina; fósforos posicionados con `gsap.to` puro + `Draggable`. |
 | **Core** | TS puro (hexagonal) | Agnóstico al framework y al runtime → reutilizable en cliente y server. |
 | **Gestor** | **pnpm** | Compatible con npm/Cloudflare; ideal para workspaces del futuro monorepo. |
 | **Backend** | **Hono** | Runtime-agnóstico (corre en Cloudflare Workers, Node, Deno o Bun). |

@@ -1,97 +1,75 @@
 import { createStore, produce } from 'solid-js/store'
 
-// Datos de un fósforo individual
+const TOTAL_MATCHES = 29
+
 export interface MatchStickData {
-    id: string;
-    /** Rotación aleatoria leve para aspecto natural (en grados) */
-    variationRotation: number;
+    id: string
+    variationRotation: number
+    zone: 'storage' | 'A' | 'B'
+    slotIndex: number | null
 }
 
-// Estado de PRESENTACIÓN: solo lo visual de los fósforos.
-// El puntaje vive en el core (ver `solidGameController`), no acá.
 interface PresentationState {
-    storageMatches: MatchStickData[]
-    matchesA: MatchStickData[]
-    matchesB: MatchStickData[]
-    matchstickSize: { width: number, height: number } | null
+    matches: MatchStickData[]
+    matchstickSize: { width: number; height: number } | null
 }
 
-const TOTAL_MATCHES = 29;
-
-// Genera el grupo inicial de fósforos con variaciones aleatorias
 const generateInitialMatches = (): MatchStickData[] => {
-    return Array.from({ length: TOTAL_MATCHES }, () => ({
+    return Array.from({ length: TOTAL_MATCHES - 1 }, () => ({
         id: crypto.randomUUID(),
         variationRotation: (Math.random() - 0.5) * 10,
-    }));
-};
+        zone: 'storage' as const,
+        slotIndex: null,
+    }))
+}
 
-// Store reactivo de SolidJS (solo presentación)
 const [presentationState, setPresentationState] = createStore<PresentationState>({
-    storageMatches: generateInitialMatches(),
-    matchesA: [],
-    matchesB: [],
-    matchstickSize: null
+    matches: generateInitialMatches(),
+    matchstickSize: null,
 })
 
-// --- Acciones ---
-
 /**
- * Mueve un fósforo entre zonas (storage, A, B, null).
- * SOLO mueve el fósforo entre los arrays de presentación; el puntaje
- * lo maneja el core a través de los comandos despachados en el drag.
+ * Mueve un fósforo a una zona destino.
+ * Solo maneja estado de presentación (zone/slotIndex + cascada).
+ * Los puntos los maneja el core via solidGameController.
  */
-export const moveMatchstick = (
-    id: string,
-    from: 'storage' | 'A' | 'B' | null,
-    to: 'storage' | 'A' | 'B' | null,
-) => {
+export const moveMatchstick = (id: string, toZone: 'storage' | 'A' | 'B') => {
     setPresentationState(produce((state) => {
-        if (from === to) return; // Sin cambios
+        const match = state.matches.find(m => m.id === id)
+        if (!match) return
 
-        // Buscar el fósforo en la lista de origen
-        const getList = (zone: typeof from) => {
-            if (zone === 'storage') return state.storageMatches
-            if (zone === 'A') return state.matchesA
-            if (zone === 'B') return state.matchesB
-            return null
+        const fromZone = match.zone
+        const fromSlot = match.slotIndex
+
+        if (fromZone === toZone) return
+
+        // Cascada: desplaza índices de fósforos posteriores en el equipo origen
+        if (fromZone === 'A' || fromZone === 'B') {
+            if (fromSlot !== null) {
+                state.matches
+                    .filter(m => m.zone === fromZone && m.slotIndex !== null && m.slotIndex > fromSlot)
+                    .forEach(m => { m.slotIndex!-- })
+            }
         }
 
-        const sourceList = getList(from)
-        if (!sourceList) return
-
-        const idx = sourceList.findIndex(m => m.id === id)
-        if (idx === -1) return
-
-        // Extraer el fósforo
-        const match = { ...sourceList[idx] }
-        sourceList.splice(idx, 1)
-
-        // Insertar en la lista destino
-        const destList = getList(to)
-        if (destList) {
-            destList.push(match)
+        if (toZone === 'storage') {
+            match.zone = 'storage'
+            match.slotIndex = null
+        } else {
+            const count = state.matches.filter(m => m.zone === toZone && m.slotIndex !== null).length
+            if (count >= 15) return
+            match.zone = toZone
+            match.slotIndex = count
         }
     }))
 }
 
-/**
- * Establece el tamaño de referencia del fósforo (medido desde el primer slot).
- */
-export const setMatchstickSize = (size: { width: number, height: number } | null) => {
+export const setMatchstickSize = (size: { width: number; height: number } | null) => {
     setPresentationState('matchstickSize', size)
 }
 
-/**
- * Reinicia el estado de presentación a su estado inicial.
- */
 export const resetPresentation = () => {
-    setPresentationState({
-        storageMatches: generateInitialMatches(),
-        matchesA: [],
-        matchesB: [],
-    })
+    setPresentationState({ matches: generateInitialMatches() })
 }
 
-// Exportar el estado reactivo (solo lectura)
 export { presentationState }

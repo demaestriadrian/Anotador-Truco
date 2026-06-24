@@ -1,192 +1,204 @@
-import { onMount, onCleanup } from 'solid-js'
-import { Draggable } from 'gsap/all'
-import gsap from 'gsap'
-import { moveMatchstick, type MatchStickData } from '@/ui/store/presentationStore'
+import { createEffect, on, onMount, onCleanup } from 'solid-js'
+import { moveMatchstick, presentationState, type MatchStickData } from '@/ui/store/presentationStore'
 import { sumarPunto, restarPunto } from '@/infrastructure/adapters/solidGameController'
 import type { TeamId } from '@/core/domain/constants'
-import type { MatchstickAnimationControls } from './createMatchstickAnimation'
+import type { MatchstickAnimationControls, AnimationTarget } from './createMatchstickAnimation'
+import { ANIMATION_DURATION } from '@/ui/constants'
 
-gsap.registerPlugin(Draggable)
+type DraggableParam = Parameters<MatchstickAnimationControls['hitTest']>[0]
 
-type MatchstickZone = 'A' | 'B' | 'storage'
+interface StorageOrigin {
+    x: number
+    y: number
+}
 
-// Mapea la zona visual del equipo ('A'/'B') al id de dominio del core.
-const mapTeam = (zone: 'A' | 'B'): TeamId => (zone === 'A' ? 'team_a' : 'team_b')
+const mapTeam = (zone: 'A' | 'B'): TeamId => zone === 'A' ? 'team_a' : 'team_b'
 
 /**
- * Inicializa la lógica de drag & drop de un fósforo.
+ * Calcula la posición de un slot relativa al contenedor del storage.
+ */
+const getSlotPosition = (
+    zone: 'A' | 'B',
+    slotIndex: number,
+    storage: HTMLElement
+): AnimationTarget | null => {
+    const slot = document.querySelector(
+        `.matchstickPosition[data-team="${zone}"][data-slot="${slotIndex}"]`
+    ) as HTMLElement | null
+    if (!slot) return null
+
+    const slotRect = slot.getBoundingClientRect()
+    const storageRect = storage.getBoundingClientRect()
+
+    const slotCenterX = slotRect.left + slotRect.width / 2
+    const slotCenterY = slotRect.top + slotRect.height / 2
+    const slotWidth = slot.offsetWidth
+    const slotHeight = slot.offsetHeight
+    const rotation = parseFloat(slot.dataset.rotation || '0')
+
+    return {
+        x: slotCenterX - slotWidth / 2 - storageRect.left,
+        y: slotCenterY - slotHeight / 2 - storageRect.top,
+        width: slotWidth,
+        height: slotHeight,
+        rotation,
+    }
+}
+
+/**
+ * Inicializa la lógica de un fósforo: drag & drop y posicionamiento reactivo.
  *
- * Responsabilidades:
- * - Crear el Draggable de GSAP para manejar el arrastre.
- * - Determinar la zona de destino al soltar (hitTest).
- * - Mover lógicamente el fósforo en el DOM (re-parentar al contenedor destino).
- * - Mover el fósforo en el store de presentación y despachar los comandos al core.
- * - Delegar TODA la animación al módulo createMatchstickAnimation.
- *
- * NO calcula posiciones, deltas, ni rotaciones. Flip se encarga de eso.
+ * El fósforo SIEMPRE permanece como hijo del storage en el DOM.
+ * Se posiciona visualmente sobre los slots usando GSAP transforms.
+ * Los puntos se despachan al core via sumarPunto/restarPunto.
  */
 export const createMatchstickLogic = (
     getElement: () => HTMLElement | undefined,
     getData: () => MatchStickData | undefined,
-    currentZone: MatchstickZone,
-    animation: MatchstickAnimationControls
+    animation: MatchstickAnimationControls,
+    randomPos: StorageOrigin
 ) => {
-    let draggableInstance: Draggable[] | null = null
+    let origin: AnimationTarget | null = null
+    let initialized = false
 
-    const isStoraged = currentZone === 'storage'
+    const getStorage = (): HTMLElement | null =>
+        document.getElementById('matchstick-storage')
 
-    /**
-     * Busca el siguiente slot vacío dentro de una sección de equipo.
-     */
-    const findNextEmptySlot = (team: 'A' | 'B'): Element | null => {
-        const container = document.querySelector(`#section-${team}`)
-        if (!container) return null
+    const calculateOrigin = (
+        size: { width: number; height: number },
+        storage: HTMLElement
+    ): AnimationTarget => {
+        const storageRect = storage.getBoundingClientRect()
+        const data = getData()
 
-        const slots = Array.from(container.querySelectorAll('.matchstickPosition'))
-        return slots.find(slot => slot.children.length === 0) || null
+        return {
+            x: randomPos.x * storageRect.width,
+            y: randomPos.y * storageRect.height,
+            width: size.width,
+            height: size.height,
+            rotation: data?.variationRotation ?? 0,
+        }
     }
 
-    /**
-     * Mueve el elemento DOM del fósforo al slot destino.
-     * Limpia transforms de GSAP antes de re-parentar para que
-     * Flip calcule la posición real del nuevo layout.
-     */
-    const reparentToSlot = (el: HTMLElement, slot: Element) => {
-        animation.clearTransforms()
-        slot.appendChild(el)
-    }
+    // ─── Drag & Drop ───
 
-    /**
-     * Devuelve el elemento DOM del fósforo al storage.
-     */
-    const reparentToStorage = (el: HTMLElement): boolean => {
-        const storageContainer = document.querySelector('#matchstick-storage')
-        if (!storageContainer) return false
-
-        animation.clearTransforms()
-        storageContainer.appendChild(el)
-        return true
-    }
-
-    /**
-     * Determina la zona de destino basándose en hitTest del Draggable.
-     */
-    const resolveTargetZone = (draggable: Draggable): 'A' | 'B' | null => {
-        if (draggable.hitTest('#section-A', '50%')) return 'A'
-        if (draggable.hitTest('#section-B', '50%')) return 'B'
+    const resolveTargetZone = (draggable: DraggableParam): 'A' | 'B' | null => {
+        if (animation.hitTest(draggable, '#section-A', '50%')) return 'A'
+        if (animation.hitTest(draggable, '#section-B', '50%')) return 'B'
         return null
     }
 
-    /**
-     * Maneja el caso: fósforo soltado en una zona de equipo válida.
-     */
-    const handleDropOnTeam = (el: HTMLElement, data: MatchStickData, targetTeam: 'A' | 'B', draggable: Draggable) => {
-        // Si el destino es el mismo equipo donde ya está, snap back
-        if (targetTeam === currentZone) {
-            animation.animateSnapBack()
-            return
+    const snapBackToCurrent = () => {
+        const data = getData()
+        if (!data) return
+
+        if (data.zone === 'storage' && origin) {
+            animation.animateSnapBack({ x: origin.x, y: origin.y })
+        } else if (data.zone !== 'storage' && data.slotIndex !== null) {
+            const storage = getStorage()
+            if (!storage) return
+            const pos = getSlotPosition(data.zone, data.slotIndex, storage)
+            if (pos) animation.animateSnapBack({ x: pos.x, y: pos.y })
         }
-
-        const targetSlot = findNextEmptySlot(targetTeam)
-        if (!targetSlot) {
-            // Zona llena → snap back
-            animation.animateSnapBack()
-            return
-        }
-
-        // Deshabilitar drag mientras anima
-        draggable.disable()
-
-        // 1. Capturar estado ANTES del cambio en el DOM
-        const state = animation.captureState()
-        if (!state) return
-
-        // 2. Mover el elemento en el DOM (re-parent al slot destino)
-        reparentToSlot(el, targetSlot)
-
-        // 3. Animar con Flip desde la posición anterior a la nueva
-        animation.animateFlipTo(state, () => {
-            // 4. Al completar la animación, mover el fósforo visual...
-            moveMatchstick(data.id, currentZone, targetTeam)
-
-            // ...y despachar el/los comando(s) al core para mantenerlo consistente.
-            // Si venía de otro equipo: resta a ese equipo y suma al destino.
-            if (currentZone === 'A' || currentZone === 'B') {
-                restarPunto(mapTeam(currentZone))
-            }
-            // Tanto si venía del storage como de otro equipo, suma al destino.
-            sumarPunto(mapTeam(targetTeam))
-        })
     }
 
-    /**
-     * Maneja el caso: fósforo soltado fuera de cualquier zona válida.
-     */
-    const handleDropOutside = (el: HTMLElement, data: MatchStickData, draggable: Draggable) => {
-        if (isStoraged) {
-            // Venía del storage y cayó fuera → volver a su lugar (snap back sin cambio de DOM)
-            animation.animateSnapBack()
-        } else {
-            // Era un fósforo jugado y cayó fuera → devolver al storage
-            draggable.disable()
+    const handleRelease = (draggable: DraggableParam) => {
+        const data = getData()
+        if (!data) return
 
-            // 1. Capturar estado antes del cambio
-            const state = animation.captureState()
+        const targetZone = resolveTargetZone(draggable)
+        const currentZone = data.zone
 
-            // 2. Mover en el DOM al storage
-            const moved = reparentToStorage(el)
-            if (!moved) {
-                animation.animateSnapBack()
+        if (targetZone) {
+            if (targetZone === currentZone) {
+                snapBackToCurrent()
                 return
             }
 
-            // 3. Animar con Flip hacia la posición del storage
-            animation.animateReturnToStorage(state, () => {
-                // Mover el fósforo visual de vuelta al depósito...
-                moveMatchstick(data.id, currentZone, 'storage')
+            // Verificar disponibilidad de slots antes de mover
+            const slotsUsed = presentationState.matches.filter(
+                m => m.zone === targetZone && m.slotIndex !== null
+            ).length
+            if (slotsUsed >= 15) {
+                snapBackToCurrent()
+                return
+            }
 
-                // ...y despachar el comando al core: restar el punto al equipo de origen.
-                // En esta rama el fósforo venía de un equipo (no del storage).
-                if (currentZone === 'A' || currentZone === 'B') {
-                    restarPunto(mapTeam(currentZone))
-                }
-            })
+            animation.disableDraggable()
+            moveMatchstick(data.id, targetZone)
+
+            if (currentZone === 'A' || currentZone === 'B') restarPunto(mapTeam(currentZone))
+            sumarPunto(mapTeam(targetZone))
+        } else {
+            if (currentZone !== 'storage') {
+                animation.disableDraggable()
+                moveMatchstick(data.id, 'storage')
+                restarPunto(mapTeam(currentZone as 'A' | 'B'))
+            } else {
+                snapBackToCurrent()
+            }
         }
     }
 
+    // ─── Ciclo de vida ───
+
     onMount(() => {
         const el = getElement()
-        const data = getData()
-        if (!el || !data) return
+        if (!el) return
 
-        // Guardar la posición de origen en el storage para poder volver después
-        if (isStoraged) {
-            animation.saveOrigin()
+        const storage = getStorage()
+        const size = presentationState.matchstickSize
+        if (storage && size) {
+            origin = calculateOrigin(size, storage)
+            animation.setPosition(origin)
         }
 
-        draggableInstance = Draggable.create(el, {
-            type: 'x,y',
-            zIndexBoost: false,
-            onRelease: function (this: Draggable) {
-                const currentData = getData()
-                const currentEl = getElement()
-                if (!currentData || !currentEl) return
-
-                const targetTeam = resolveTargetZone(this)
-
-                if (targetTeam) {
-                    handleDropOnTeam(currentEl, currentData, targetTeam, this)
-                } else {
-                    handleDropOutside(currentEl, currentData, this)
-                }
-            }
-        })
+        animation.initDraggable(handleRelease)
+        initialized = true
     })
 
-    // Limpiar draggable al desmontar
+    // Posicionamiento reactivo: anima cuando zone/slotIndex cambian
+    createEffect(on(
+        () => ({
+            zone: getData()?.zone,
+            slotIndex: getData()?.slotIndex,
+            size: presentationState.matchstickSize,
+        }),
+        () => {
+            if (!initialized) return
+
+            const data = getData()
+            const el = getElement()
+            const size = presentationState.matchstickSize
+            if (!data || !el || !size) return
+
+            const storage = getStorage()
+            if (!storage) return
+
+            if (data.zone === 'storage') {
+                origin = calculateOrigin(size, storage)
+                animation.disableDraggable()
+                animation.animateToPosition(
+                    origin,
+                    ANIMATION_DURATION.RETURN_TO_STORAGE,
+                    () => animation.enableDraggable()
+                )
+            } else if (data.slotIndex !== null) {
+                const pos = getSlotPosition(data.zone, data.slotIndex, storage)
+                if (pos) {
+                    animation.disableDraggable()
+                    animation.animateToPosition(
+                        pos,
+                        ANIMATION_DURATION.MOVE_TO_SLOT,
+                        () => animation.enableDraggable()
+                    )
+                }
+            }
+        },
+        { defer: true }
+    ))
+
     onCleanup(() => {
-        if (draggableInstance) {
-            draggableInstance.forEach(d => d.kill())
-        }
+        animation.destroyDraggable()
     })
 }

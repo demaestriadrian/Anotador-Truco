@@ -9,18 +9,11 @@ const MatchStickStorage = () => {
             class="matchstickStorage"
             style={{
                 opacity: presentationState.matchstickSize ? 1 : 0,
-                transition: 'opacity 0.5s ease-in'
+                transition: 'opacity 0.5s ease-in',
             }}
         >
-            <For each={presentationState.storageMatches}>
-                {(match) => (
-                    <MatchStick
-                        data={match}
-                        isStoraged={true}
-                        overrideSize={presentationState.matchstickSize || undefined}
-                        currentTeam="storage"
-                    />
-                )}
+            <For each={presentationState.matches}>
+                {(match) => <MatchStick data={match} />}
             </For>
         </div>
     )
