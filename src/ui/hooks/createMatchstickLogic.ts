@@ -1,5 +1,6 @@
 import { createEffect, on, onMount, onCleanup } from 'solid-js'
 import { moveMatchstick, presentationState, type MatchStickData } from '@/ui/store/presentationStore'
+import { registerMatchstick, unregisterMatchstick } from '@/ui/store/matchstickRegistry'
 import { sumarPunto, restarPunto } from '@/infrastructure/adapters/solidGameController'
 import type { TeamId } from '@/core/domain/constants'
 import type { MatchstickAnimationControls, AnimationTarget } from './createMatchstickAnimation'
@@ -102,11 +103,12 @@ export const createMatchstickLogic = (
         }
     }
 
-    const handleRelease = (draggable: DraggableParam) => {
+    // Confirma el destino del fósforo. Compartido por el Draggable de GSAP (drag directo) y por
+    // el arrastre asistido (que resuelve la zona destino por coordenadas).
+    const commitDrop = (targetZone: 'A' | 'B' | null) => {
         const data = getData()
         if (!data) return
 
-        const targetZone = resolveTargetZone(draggable)
         const currentZone = data.zone
 
         if (targetZone) {
@@ -140,6 +142,26 @@ export const createMatchstickLogic = (
         }
     }
 
+    const handleRelease = (draggable: DraggableParam) => commitDrop(resolveTargetZone(draggable))
+
+    // ─── Arrastre asistido ───
+
+    // Posiciona el fósforo centrado bajo el puntero (coords de pantalla → relativas al storage).
+    const moveToPointer = (clientX: number, clientY: number) => {
+        const storage = getStorage()
+        const size = presentationState.matchstickSize
+        if (!storage || !size) return
+
+        const rect = storage.getBoundingClientRect()
+        animation.setPosition({
+            x: clientX - rect.left - size.width / 2,
+            y: clientY - rect.top - size.height / 2,
+            width: size.width,
+            height: size.height,
+            rotation: getData()?.variationRotation ?? 0,
+        })
+    }
+
     // ─── Ciclo de vida ───
 
     onMount(() => {
@@ -155,6 +177,17 @@ export const createMatchstickLogic = (
 
         animation.initDraggable(handleRelease)
         initialized = true
+
+        // Registrar el handle para que el arrastre asistido pueda enganchar este fósforo.
+        const data = getData()
+        if (data) {
+            registerMatchstick(data.id, {
+                // El Draggable propio no se toca: el pointerdown no cayó sobre el fósforo.
+                beginAssisted: (x, y) => moveToPointer(x, y),
+                moveTo: (x, y) => moveToPointer(x, y),
+                drop: (zone) => commitDrop(zone),
+            })
+        }
     })
 
     // Posicionamiento reactivo: anima cuando zone/slotIndex cambian
@@ -199,6 +232,8 @@ export const createMatchstickLogic = (
     ))
 
     onCleanup(() => {
+        const data = getData()
+        if (data) unregisterMatchstick(data.id)
         animation.destroyDraggable()
     })
 }

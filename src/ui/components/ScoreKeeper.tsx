@@ -1,12 +1,18 @@
 import { gameState, cambiarNombre } from '@/infrastructure/adapters/solidGameController'
+import { createScoreboardGestures } from '@/ui/hooks/createScoreboardGestures'
 import PointSection from './PointSection'
 import MatchStickStorage from './MatchStickStorage'
 import TeamName from './TeamName'
 import Separator from './Separator'
 
 const ScoreKeeper = () => {
+    let rootRef: HTMLDivElement | undefined
+
+    // Gestos de puntaje (tap/click) y arrastre asistido sobre toda la zona de juego.
+    createScoreboardGestures(() => rootRef)
+
     return (
-        <div class="scorekeeper">
+        <div class="scorekeeper" ref={rootRef} style={{ 'touch-action': 'none' }}>
             <header class="score-header">
                 <div class="score-reference"><span>{gameState.teams.team_a.score}</span></div>
 
