@@ -1,6 +1,7 @@
 import { gameState, cambiarNombre } from '@/infrastructure/adapters/solidGameController'
 import { createScoreboardGestures } from '@/ui/hooks/createScoreboardGestures'
 import { createCoreResetBridge } from '@/ui/hooks/createCoreResetBridge'
+import { createMatchLifecycleBridge } from '@/ui/hooks/createMatchLifecycleBridge'
 import PointSection from './PointSection'
 import MatchStickStorage from './MatchStickStorage'
 import TeamName from './TeamName'
@@ -14,6 +15,9 @@ const ScoreKeeper = () => {
 
     // Reacciona a las decisiones de reset/llenado de zona que emite el core (límite malas↔buenas).
     createCoreResetBridge()
+
+    // Reacciona al ciclo de vida de la partida (victoria / deshacer / finalización).
+    createMatchLifecycleBridge()
 
     return (
         <div class="scorekeeper" ref={rootRef} style={{ 'touch-action': 'none' }}>

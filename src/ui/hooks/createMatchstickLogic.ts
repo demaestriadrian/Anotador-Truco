@@ -1,7 +1,7 @@
 import { createEffect, on, onMount, onCleanup } from 'solid-js'
 import { moveMatchstick, presentationState, consumeInstantSnap, type MatchStickData } from '@/ui/store/presentationStore'
 import { registerMatchstick, unregisterMatchstick } from '@/ui/store/matchstickRegistry'
-import { sumarPunto, restarPunto } from '@/infrastructure/adapters/solidGameController'
+import { sumarPunto, restarPunto, gameState } from '@/infrastructure/adapters/solidGameController'
 import type { TeamId } from '@/core/domain/constants'
 import type { MatchstickAnimationControls, AnimationTarget } from './createMatchstickAnimation'
 import { ANIMATION_DURATION } from '@/ui/constants'
@@ -111,6 +111,14 @@ export const createMatchstickLogic = (
     const commitDrop = (targetZone: 'A' | 'B' | null) => {
         const data = getData()
         if (!data) return
+
+        // Partida terminada: el resultado ya está decidido. Si se soltó sobre una zona, re-dispara el
+        // aviso de victoria (el core bloquea el punto) y el fósforo vuelve a su lugar; nada se puntúa.
+        if (gameState.finished) {
+            if (targetZone) sumarPunto(mapTeam(targetZone))
+            snapBackToCurrent()
+            return
+        }
 
         const currentZone = data.zone
 

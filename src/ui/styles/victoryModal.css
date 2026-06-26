@@ -1,0 +1,121 @@
+/* Modal de fin de partida. Overlay full-screen sobre el tablero (por encima de los fósforos,
+   que usan z-index ≥ 100) que intercepta el input mientras está abierto. */
+.victory-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  animation: victory-overlay-in 0.2s ease-out;
+}
+
+.victory-card {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2.5rem 1.5rem 2rem;
+  border-radius: 1rem;
+  background: linear-gradient(160deg, #15784a 0%, #0c4f2f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  animation: victory-card-in 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+/* Botón "cerrar" (✕): solo descarta el anuncio; no toca el puntaje. */
+.victory-card__close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: whitesmoke;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.08s ease;
+}
+
+.victory-card__close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.victory-card__close:active {
+  transform: scale(0.92);
+}
+
+.victory-card__eyebrow {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(245, 245, 245, 0.7);
+}
+
+.victory-card__winner {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: whitesmoke;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.victory-card__actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.victory-btn {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.08s ease, filter 0.15s ease, background-color 0.15s ease;
+}
+
+.victory-btn:active {
+  transform: scale(0.97);
+}
+
+/* Acción principal: empezar una partida nueva. */
+.victory-btn--primary {
+  border: none;
+  color: #0c4f2f;
+  background: linear-gradient(180deg, #ffd76a 0%, #f2b63c 100%);
+}
+
+.victory-btn--primary:hover {
+  filter: brightness(1.05);
+}
+
+@keyframes victory-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes victory-card-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}

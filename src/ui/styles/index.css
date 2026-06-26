@@ -2,6 +2,7 @@
 @import url(./scorekeeper.css);
 @import url(./separator.css);
 @import url(./table.css);
+@import url(./victoryModal.css);
 
 * {
   margin: 0;

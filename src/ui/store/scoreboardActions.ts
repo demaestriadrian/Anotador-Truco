@@ -1,5 +1,5 @@
 import { moveMatchstick, presentationState } from '@/ui/store/presentationStore'
-import { sumarPunto, restarPunto } from '@/infrastructure/adapters/solidGameController'
+import { sumarPunto, restarPunto, gameState } from '@/infrastructure/adapters/solidGameController'
 import type { TeamId } from '@/core/domain/constants'
 
 type Zone = 'A' | 'B'
@@ -30,7 +30,11 @@ const slotsUsed = (zone: Zone): number =>
  * La animación la dispara el `createEffect` reactivo de `createMatchstickLogic`.
  */
 export const addPointToZone = (zone: Zone) => {
+    // Estado ANTES de sumar: si ya estaba terminada, el core bloquea el punto y solo re-emite el
+    // aviso de victoria → no se coloca ningún fósforo (evita un fósforo fantasma sin punto detrás).
+    const yaTerminada = gameState.finished
     sumarPunto(mapTeam(zone))
+    if (yaTerminada) return
     if (slotsUsed(zone) >= 15) return   // sin lugar (caso > límite, diferido): score sube sin fósforo
     const id = lastInStorage()
     if (id) moveMatchstick(id, zone)

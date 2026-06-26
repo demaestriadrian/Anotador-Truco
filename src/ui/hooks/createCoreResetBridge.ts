@@ -13,13 +13,12 @@ const teamToZone = (id: TeamId): 'A' | 'B' => id === 'team_a' ? 'A' : 'B'
 export const createCoreResetBridge = () => {
     onMount(() => {
         const unsubscribe = onGameEvent((event) => {
-            const zone = teamToZone(event.teamId)
             switch (event.type) {
                 case 'ZONE_RESET':
-                    clearZone(zone, true)   // recoge los fósforos de la zona (animado)
+                    clearZone(teamToZone(event.teamId), true)   // recoge los fósforos de la zona (animado)
                     break
                 case 'ZONE_FILL':
-                    fillZone(zone, true)    // rellena la zona a 15 / malas completas (animado)
+                    fillZone(teamToZone(event.teamId), true)    // rellena la zona a 15 / malas completas (animado)
                     break
             }
         })

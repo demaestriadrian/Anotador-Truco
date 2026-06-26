@@ -43,6 +43,10 @@ export const cambiarLimite = (limit: Limit) =>
 
 export const reiniciar = () => engine.dispatch({ type: 'RESET' });
 
+// Finalización definitiva de la partida ("Nueva Partida"): el core resetea ambos a 0 y emite
+// MATCH_FINALIZED para que el pipeline de finalización corra (limpiar fósforos, etc.).
+export const finalizarPartida = () => engine.dispatch({ type: 'FINALIZE_MATCH' });
+
 // Canal de eventos de dominio: la UI se suscribe para reaccionar a las decisiones del core
 // (p.ej. vaciar/llenar los fósforos de una zona). El adapter no conoce la presentación.
 export const onGameEvent = (fn: GameEventListener) => engine.subscribeEvents(fn);

@@ -1,4 +1,5 @@
 import ScoreKeeper from './ScoreKeeper'
+import VictoryModal from './VictoryModal'
 
 const App = () => {
     return (
@@ -7,6 +8,7 @@ const App = () => {
             <main class="table">
                 <ScoreKeeper />
             </main>
+            <VictoryModal />
         </>
     )
 }
