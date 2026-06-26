@@ -34,6 +34,9 @@ export class Match {
   }
 
   addPoints(teamId: TeamId, points: number): void {
+    // Partida terminada: el resultado ya está decidido, no se aceptan más puntos (el puntaje del
+    // ganador queda fijo en el límite). El intento igual dispara el aviso de victoria vía las reglas.
+    if (this.isFinished()) return;
     const team = this.getTeamById(teamId);
     team.addPoints(points);
   }

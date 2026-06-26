@@ -18,6 +18,7 @@ export type Command =
   | { type: 'SET_TEAM_NAME'; teamId: TeamId; name: string }
   | { type: 'SET_LIMIT';     limit: Limit }
   | { type: 'RESET' }
+  | { type: 'FINALIZE_MATCH' }   // finalización definitiva: confirma el fin y resetea ambos a 0
 
 // Snapshot inmutable y serializable del estado de un equipo dentro del juego.
 export interface TeamSnapshot { id: TeamId; name: string; score: number; phase: Phase }
@@ -43,6 +44,10 @@ export type ResetReason = 'enter-buenas' | 'exit-buenas'
 export type GameEvent =
   | { type: 'ZONE_RESET'; teamId: TeamId; reason: ResetReason }  // vaciar los fósforos de la zona
   | { type: 'ZONE_FILL';  teamId: TeamId; reason: ResetReason }  // llenar la zona (malas completas)
+  // Eventos de ciclo de vida de la partida (doble validación del fin):
+  | { type: 'MATCH_VICTORY';        teamId: TeamId }    // condición de victoria alcanzada (intermedio)
+  | { type: 'MATCH_VICTORY_UNDONE'; teamId: TeamId }    // se deshizo el punto del ganador → cerrar modal
+  | { type: 'MATCH_FINALIZED';      winnerId: TeamId }  // "Nueva Partida": fin confirmado + reset
 
 // Listener que recibe cada evento de dominio que el core emite.
 export type GameEventListener = (event: GameEvent) => void

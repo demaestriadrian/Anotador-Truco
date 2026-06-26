@@ -4,7 +4,7 @@
 // y expone una API comando-in / snapshot-out / subscribe. No depende de SolidJS ni del
 // DOM, por lo que es framework-agnóstico y unitariamente testeable.
 import { Match } from '@/core/domain/entities/Match';
-import { DEFAULT_RESET_RULES, type ResetRule } from '@/core/application/resetRules';
+import { DEFAULT_EVENT_RULES, type GameEventRule } from '@/core/application/eventRules';
 import type { Limit } from '@/core/domain/constants';
 import type {
   Command,
@@ -22,12 +22,12 @@ export class GameEngine {
   private readonly listeners = new Set<GameStateListener>();
   // Suscriptores notificados ante cada evento de dominio (reset/llenado de zona).
   private readonly eventListeners = new Set<GameEventListener>();
-  // Reglas que deciden los eventos de reset a partir de la transición de estado.
-  private readonly rules: ResetRule[];
+  // Reglas que deciden los eventos de dominio a partir de la transición de estado (y el comando).
+  private readonly rules: GameEventRule[];
 
   constructor(
     opts?: { limit?: Limit; teamAName?: string; teamBName?: string },
-    rules: ResetRule[] = DEFAULT_RESET_RULES,
+    rules: GameEventRule[] = DEFAULT_EVENT_RULES,
   ) {
     this.match = new Match(opts?.teamAName, opts?.teamBName, opts?.limit);
     this.rules = rules;
@@ -54,15 +54,20 @@ export class GameEngine {
       case 'RESET':
         this.match.reset();
         break;
+      case 'FINALIZE_MATCH':
+        // Finalización definitiva: resetea ambos a 0 (reusa Match.reset). El aviso de fin lo emite
+        // MatchFinalizedRule más abajo, a partir del comando.
+        this.match.reset();
+        break;
     }
 
     const next = this.buildSnapshot();
     this.notify(next);
 
-    // Las reglas deciden los resets; el engine solo orquesta y emite. (Síncrono: la UI ya
-    // reaccionó al evento cuando `dispatch` retorna.)
+    // Las reglas deciden los eventos de dominio; el engine solo orquesta y emite. (Síncrono: la UI
+    // ya reaccionó al evento cuando `dispatch` retorna.)
     for (const rule of this.rules) {
-      for (const event of rule.evaluate(prev, next)) this.notifyEvent(event);
+      for (const event of rule.evaluate(prev, next, cmd)) this.notifyEvent(event);
     }
 
     return next;
