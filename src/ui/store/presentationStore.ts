@@ -1,7 +1,8 @@
 import { createStore, produce } from 'solid-js/store'
 
-// 30 fósforos: el máximo simultáneo en mesa es con ambos equipos en 15 malas (15 + 15).
-const TOTAL_MATCHES = 30
+// 31 fósforos: 30 para el máximo en mesa (ambos equipos en 15 malas = 15 + 15) + 1 de respaldo
+// para poder anotar el punto del ganador cuando ambos están en 15.
+const TOTAL_MATCHES = 31
 
 export interface MatchStickData {
     id: string

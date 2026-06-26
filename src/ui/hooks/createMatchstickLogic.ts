@@ -147,15 +147,19 @@ export const createMatchstickLogic = (
             return
         }
 
-        // Zona → zona (A↔B): caso raro, sin manejo de cruce de buenas. Guard simple de lleno.
-        if (slotsUsed(targetZone) >= 15) {
-            snapBackToCurrent()
-            return
-        }
+        // Zona → zona (A↔B). Score primero en el destino: si está lleno (15→16) el core emite
+        // ZONE_RESET y lo vacía, dejando lugar para este fósforo como 1º de las buenas. Luego el
+        // origen pierde el punto.
         animation.disableDraggable()
-        moveMatchstick(data.id, targetZone)
-        restarPunto(mapTeam(currentZone))
         sumarPunto(mapTeam(targetZone))
+        if (slotsUsed(targetZone) < 15) {
+            moveMatchstick(data.id, targetZone)
+            restarPunto(mapTeam(currentZone))
+        } else {
+            // Destino sin lugar (caso > límite, diferido): revertir y rebotar.
+            restarPunto(mapTeam(targetZone))
+            snapBackToCurrent()
+        }
     }
 
     const handleRelease = (draggable: DraggableParam) => commitDrop(resolveTargetZone(draggable))
