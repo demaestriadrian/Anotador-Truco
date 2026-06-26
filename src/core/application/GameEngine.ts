@@ -4,26 +4,40 @@
 // y expone una API comando-in / snapshot-out / subscribe. No depende de SolidJS ni del
 // DOM, por lo que es framework-agnóstico y unitariamente testeable.
 import { Match } from '@/core/domain/entities/Match';
+import { DEFAULT_RESET_RULES, type ResetRule } from '@/core/application/resetRules';
 import type { Limit } from '@/core/domain/constants';
 import type {
   Command,
   GameSnapshot,
   GameStateListener,
+  GameEvent,
+  GameEventListener,
   TeamSnapshot,
 } from '@/core/ports/types';
 
 export class GameEngine {
   // Única fuente de verdad del marcador.
   private readonly match: Match;
-  // Suscriptores notificados ante cada cambio de estado.
+  // Suscriptores notificados ante cada cambio de estado (snapshot).
   private readonly listeners = new Set<GameStateListener>();
+  // Suscriptores notificados ante cada evento de dominio (reset/llenado de zona).
+  private readonly eventListeners = new Set<GameEventListener>();
+  // Reglas que deciden los eventos de reset a partir de la transición de estado.
+  private readonly rules: ResetRule[];
 
-  constructor(opts?: { limit?: Limit; teamAName?: string; teamBName?: string }) {
+  constructor(
+    opts?: { limit?: Limit; teamAName?: string; teamBName?: string },
+    rules: ResetRule[] = DEFAULT_RESET_RULES,
+  ) {
     this.match = new Match(opts?.teamAName, opts?.teamBName, opts?.limit);
+    this.rules = rules;
   }
 
   // Aplica un comando al `Match`, recalcula el snapshot, notifica a los listeners y lo devuelve.
+  // Además compara el estado antes/después y, según las reglas, emite eventos de dominio (reset).
   dispatch(cmd: Command): GameSnapshot {
+    const prev = this.buildSnapshot();
+
     switch (cmd.type) {
       case 'ADD_POINTS':
         this.match.addPoints(cmd.teamId, cmd.amount);
@@ -42,9 +56,16 @@ export class GameEngine {
         break;
     }
 
-    const snapshot = this.buildSnapshot();
-    this.notify(snapshot);
-    return snapshot;
+    const next = this.buildSnapshot();
+    this.notify(next);
+
+    // Las reglas deciden los resets; el engine solo orquesta y emite. (Síncrono: la UI ya
+    // reaccionó al evento cuando `dispatch` retorna.)
+    for (const rule of this.rules) {
+      for (const event of rule.evaluate(prev, next)) this.notifyEvent(event);
+    }
+
+    return next;
   }
 
   // Devuelve el snapshot inmutable del estado actual.
@@ -60,10 +81,25 @@ export class GameEngine {
     };
   }
 
+  // Registra un listener de eventos de dominio y devuelve una función para desuscribirlo.
+  subscribeEvents(fn: GameEventListener): () => void {
+    this.eventListeners.add(fn);
+    return () => {
+      this.eventListeners.delete(fn);
+    };
+  }
+
   // Notifica a todos los suscriptores con el snapshot recién calculado.
   private notify(snapshot: GameSnapshot): void {
     for (const listener of this.listeners) {
       listener(snapshot);
+    }
+  }
+
+  // Notifica a todos los suscriptores de eventos con el evento de dominio recién emitido.
+  private notifyEvent(event: GameEvent): void {
+    for (const listener of this.eventListeners) {
+      listener(event);
     }
   }
 

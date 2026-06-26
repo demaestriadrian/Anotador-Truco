@@ -8,7 +8,7 @@
 import { createStore, reconcile } from 'solid-js/store';
 
 import { GameEngine } from '@/core/application/GameEngine';
-import type { GameSnapshot } from '@/core/ports/types';
+import type { GameSnapshot, GameEventListener } from '@/core/ports/types';
 import type { TeamId, Limit } from '@/core/domain/constants';
 
 // Instancia única (singleton de módulo): un solo engine para toda la app.
@@ -42,3 +42,7 @@ export const cambiarLimite = (limit: Limit) =>
   engine.dispatch({ type: 'SET_LIMIT', limit });
 
 export const reiniciar = () => engine.dispatch({ type: 'RESET' });
+
+// Canal de eventos de dominio: la UI se suscribe para reaccionar a las decisiones del core
+// (p.ej. vaciar/llenar los fósforos de una zona). El adapter no conoce la presentación.
+export const onGameEvent = (fn: GameEventListener) => engine.subscribeEvents(fn);

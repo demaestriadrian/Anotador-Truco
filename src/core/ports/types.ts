@@ -33,3 +33,16 @@ export interface GameSnapshot {
 
 // Listener que recibe cada nuevo snapshot cuando el estado del core cambia.
 export type GameStateListener = (state: GameSnapshot) => void
+
+// Razón por la que el core decide resetear una zona. Union extensible (OCP): agregar 'match-end',
+// etc., es ADITIVO y no obliga a modificar las reglas ni el engine existentes.
+export type ResetReason = 'enter-buenas' | 'exit-buenas'
+
+// Eventos de dominio que el core emite hacia afuera (UI hoy, backend mañana). Serializables,
+// igual que Command/GameSnapshot: despachar local hoy = enviar por WebSocket mañana.
+export type GameEvent =
+  | { type: 'ZONE_RESET'; teamId: TeamId; reason: ResetReason }  // vaciar los fósforos de la zona
+  | { type: 'ZONE_FILL';  teamId: TeamId; reason: ResetReason }  // llenar la zona (malas completas)
+
+// Listener que recibe cada evento de dominio que el core emite.
+export type GameEventListener = (event: GameEvent) => void
