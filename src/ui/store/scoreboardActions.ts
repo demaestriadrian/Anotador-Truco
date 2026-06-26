@@ -25,24 +25,23 @@ const slotsUsed = (zone: Zone): number =>
     presentationState.matches.filter(m => m.zone === zone && m.slotIndex !== null).length
 
 /**
- * +1: toma el último fósforo del depósito y lo manda a la zona.
- * La animación de entrada la dispara el `createEffect` reactivo de `createMatchstickLogic`.
+ * +1: suma el punto PRIMERO (si cruza 15→16, el core emite ZONE_RESET y la zona se vacía de forma
+ * síncrona), y luego coloca el fósforo del punto nuevo. Así, al entrar a las buenas, queda 1 fósforo.
+ * La animación la dispara el `createEffect` reactivo de `createMatchstickLogic`.
  */
 export const addPointToZone = (zone: Zone) => {
-    if (slotsUsed(zone) >= 15) return
-    const id = lastInStorage()
-    if (!id) return
-    moveMatchstick(id, zone)
     sumarPunto(mapTeam(zone))
+    if (slotsUsed(zone) >= 15) return   // sin lugar (caso > límite, diferido): score sube sin fósforo
+    const id = lastInStorage()
+    if (id) moveMatchstick(id, zone)
 }
 
 /**
- * −1: toma el último fósforo de la zona y lo devuelve al depósito.
- * La animación inversa la dispara el mismo efecto reactivo.
+ * −1: saca el último fósforo de la zona y resta el punto (si cruza 16→15, el core emite ZONE_FILL
+ * y la zona se rellena a 15). La animación la dispara el mismo efecto reactivo.
  */
 export const removePointFromZone = (zone: Zone) => {
     const id = lastInZone(zone)
-    if (!id) return
-    moveMatchstick(id, 'storage')
+    if (id) moveMatchstick(id, 'storage')
     restarPunto(mapTeam(zone))
 }

@@ -1,5 +1,6 @@
 import { gameState, cambiarNombre } from '@/infrastructure/adapters/solidGameController'
 import { createScoreboardGestures } from '@/ui/hooks/createScoreboardGestures'
+import { createCoreResetBridge } from '@/ui/hooks/createCoreResetBridge'
 import PointSection from './PointSection'
 import MatchStickStorage from './MatchStickStorage'
 import TeamName from './TeamName'
@@ -10,6 +11,9 @@ const ScoreKeeper = () => {
 
     // Gestos de puntaje (tap/click) y arrastre asistido sobre toda la zona de juego.
     createScoreboardGestures(() => rootRef)
+
+    // Reacciona a las decisiones de reset/llenado de zona que emite el core (límite malas↔buenas).
+    createCoreResetBridge()
 
     return (
         <div class="scorekeeper" ref={rootRef} style={{ 'touch-action': 'none' }}>

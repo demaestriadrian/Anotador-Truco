@@ -1,6 +1,7 @@
 import { createStore, produce } from 'solid-js/store'
 
-const TOTAL_MATCHES = 29
+// 30 fósforos: el máximo simultáneo en mesa es con ambos equipos en 15 malas (15 + 15).
+const TOTAL_MATCHES = 30
 
 export interface MatchStickData {
     id: string
@@ -15,7 +16,7 @@ interface PresentationState {
 }
 
 const generateInitialMatches = (): MatchStickData[] => {
-    return Array.from({ length: TOTAL_MATCHES - 1 }, () => ({
+    return Array.from({ length: TOTAL_MATCHES }, () => ({
         id: crypto.randomUUID(),
         variationRotation: (Math.random() - 0.5) * 10,
         zone: 'storage' as const,
@@ -60,6 +61,47 @@ export const moveMatchstick = (id: string, toZone: 'storage' | 'A' | 'B') => {
             if (count >= 15) return
             match.zone = toZone
             match.slotIndex = count
+        }
+    }))
+}
+
+// Ids cuyo PRÓXIMO reposicionamiento debe ser instantáneo (sin animación). Estado transitorio
+// de presentación; lo consume el efecto reactivo de cada fósforo en `createMatchstickLogic`.
+const instantSnap = new Set<string>()
+
+/** Devuelve true si el fósforo debía reposicionarse al instante y lo marca como consumido. */
+export const consumeInstantSnap = (id: string): boolean => instantSnap.delete(id)
+
+/**
+ * Vacía los fósforos de una zona de puntaje: los devuelve al depósito.
+ * Solo presentación (no toca el puntaje del core). `animate=false` reposiciona al instante.
+ */
+export const clearZone = (zone: 'A' | 'B', animate = true) => {
+    setPresentationState(produce((state) => {
+        for (const m of state.matches) {
+            if (m.zone !== zone) continue
+            if (!animate) instantSnap.add(m.id)
+            m.zone = 'storage'
+            m.slotIndex = null
+        }
+    }))
+}
+
+/**
+ * Llena una zona hasta 15 (malas completas) tomando fósforos del depósito.
+ * Solo presentación. `animate=false` reposiciona al instante.
+ */
+export const fillZone = (zone: 'A' | 'B', animate = true) => {
+    setPresentationState(produce((state) => {
+        const count = state.matches.filter(m => m.zone === zone && m.slotIndex !== null).length
+        const fromStorage = state.matches.filter(m => m.zone === 'storage')
+        let i = 0
+        for (let slot = count; slot < 15; slot++) {
+            const m = fromStorage[i++]
+            if (!m) break
+            if (!animate) instantSnap.add(m.id)
+            m.zone = zone
+            m.slotIndex = slot
         }
     }))
 }

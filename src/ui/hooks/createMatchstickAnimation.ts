@@ -33,6 +33,7 @@ export const createMatchstickAnimation = (getElement: () => HTMLElement | undefi
             width: target.width,
             height: target.height,
             rotation: target.rotation,
+            overwrite: true,   // matar cualquier tween en curso del mismo fósforo
         })
     }
 
@@ -52,7 +53,8 @@ export const createMatchstickAnimation = (getElement: () => HTMLElement | undefi
             rotation: target.rotation,
             duration,
             ease: 'power2.out',
-            onComplete,
+            overwrite: true,   // un tween nuevo mata al anterior del mismo fósforo (evita que un
+            onComplete,        // tween de reset más largo "gane" y deje el fósforo en el depósito)
         })
     }
 
@@ -68,6 +70,7 @@ export const createMatchstickAnimation = (getElement: () => HTMLElement | undefi
             y: target.y,
             duration: ANIMATION_DURATION.SNAP_BACK,
             ease: 'power2.out',
+            overwrite: true,
             onComplete,
         })
     }

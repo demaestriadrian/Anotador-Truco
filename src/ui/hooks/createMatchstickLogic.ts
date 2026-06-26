@@ -1,5 +1,5 @@
 import { createEffect, on, onMount, onCleanup } from 'solid-js'
-import { moveMatchstick, presentationState, type MatchStickData } from '@/ui/store/presentationStore'
+import { moveMatchstick, presentationState, consumeInstantSnap, type MatchStickData } from '@/ui/store/presentationStore'
 import { registerMatchstick, unregisterMatchstick } from '@/ui/store/matchstickRegistry'
 import { sumarPunto, restarPunto } from '@/infrastructure/adapters/solidGameController'
 import type { TeamId } from '@/core/domain/constants'
@@ -105,41 +105,57 @@ export const createMatchstickLogic = (
 
     // Confirma el destino del fósforo. Compartido por el Draggable de GSAP (drag directo) y por
     // el arrastre asistido (que resuelve la zona destino por coordenadas).
+    const slotsUsed = (zone: 'A' | 'B'): number =>
+        presentationState.matches.filter(m => m.zone === zone && m.slotIndex !== null).length
+
     const commitDrop = (targetZone: 'A' | 'B' | null) => {
         const data = getData()
         if (!data) return
 
         const currentZone = data.zone
 
-        if (targetZone) {
-            if (targetZone === currentZone) {
+        // Soltó fuera de zonas → vuelve al depósito (restar; puede cruzar 16→15 = ZONE_FILL).
+        if (!targetZone) {
+            if (currentZone === 'storage') {
                 snapBackToCurrent()
-                return
-            }
-
-            // Verificar disponibilidad de slots antes de mover
-            const slotsUsed = presentationState.matches.filter(
-                m => m.zone === targetZone && m.slotIndex !== null
-            ).length
-            if (slotsUsed >= 15) {
-                snapBackToCurrent()
-                return
-            }
-
-            animation.disableDraggable()
-            moveMatchstick(data.id, targetZone)
-
-            if (currentZone === 'A' || currentZone === 'B') restarPunto(mapTeam(currentZone))
-            sumarPunto(mapTeam(targetZone))
-        } else {
-            if (currentZone !== 'storage') {
+            } else {
                 animation.disableDraggable()
                 moveMatchstick(data.id, 'storage')
-                restarPunto(mapTeam(currentZone as 'A' | 'B'))
+                restarPunto(mapTeam(currentZone))
+            }
+            return
+        }
+
+        // Misma zona → rebota.
+        if (targetZone === currentZone) {
+            snapBackToCurrent()
+            return
+        }
+
+        // Depósito → zona (sumar). Score primero: si la zona está llena (15→16) el core emite
+        // ZONE_RESET y la vacía (síncrono), dejando lugar para este fósforo como 1º de las buenas.
+        if (currentZone === 'storage') {
+            animation.disableDraggable()
+            sumarPunto(mapTeam(targetZone))
+            if (slotsUsed(targetZone) < 15) {
+                moveMatchstick(data.id, targetZone)
             } else {
+                // Sin lugar (caso > límite, diferido): revertir y rebotar.
+                restarPunto(mapTeam(targetZone))
                 snapBackToCurrent()
             }
+            return
         }
+
+        // Zona → zona (A↔B): caso raro, sin manejo de cruce de buenas. Guard simple de lleno.
+        if (slotsUsed(targetZone) >= 15) {
+            snapBackToCurrent()
+            return
+        }
+        animation.disableDraggable()
+        moveMatchstick(data.id, targetZone)
+        restarPunto(mapTeam(currentZone))
+        sumarPunto(mapTeam(targetZone))
     }
 
     const handleRelease = (draggable: DraggableParam) => commitDrop(resolveTargetZone(draggable))
@@ -211,20 +227,30 @@ export const createMatchstickLogic = (
             if (data.zone === 'storage') {
                 origin = calculateOrigin(size, storage)
                 animation.disableDraggable()
-                animation.animateToPosition(
-                    origin,
-                    ANIMATION_DURATION.RETURN_TO_STORAGE,
-                    () => animation.enableDraggable()
-                )
+                if (consumeInstantSnap(data.id)) {
+                    animation.setPosition(origin)
+                    animation.enableDraggable()
+                } else {
+                    animation.animateToPosition(
+                        origin,
+                        ANIMATION_DURATION.RETURN_TO_STORAGE,
+                        () => animation.enableDraggable()
+                    )
+                }
             } else if (data.slotIndex !== null) {
                 const pos = getSlotPosition(data.zone, data.slotIndex, storage)
                 if (pos) {
                     animation.disableDraggable()
-                    animation.animateToPosition(
-                        pos,
-                        ANIMATION_DURATION.MOVE_TO_SLOT,
-                        () => animation.enableDraggable()
-                    )
+                    if (consumeInstantSnap(data.id)) {
+                        animation.setPosition(pos)
+                        animation.enableDraggable()
+                    } else {
+                        animation.animateToPosition(
+                            pos,
+                            ANIMATION_DURATION.MOVE_TO_SLOT,
+                            () => animation.enableDraggable()
+                        )
+                    }
                 }
             }
         },
