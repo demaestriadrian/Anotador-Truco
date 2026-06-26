@@ -30,6 +30,11 @@ Marcador local funcionando sobre **arquitectura hexagonal con el core como autor
   asistido (`gestureRecognizer` + detectores como estrategias), conviviendo con el drag & drop.
 - [x] **Reset de zona decidido por el core** (`evento-out`): al cruzar el límite malas↔buenas (15↔16)
   el core emite `ZONE_RESET`/`ZONE_FILL` y la UI vacía/llena la zona; el puntaje sigue acumulado.
+- [x] **Fin de partida con doble validación** (`evento-out`): al llegar al límite el core emite
+  `MATCH_VICTORY` (no borra nada) → modal de ganador con confeti. El puntaje del ganador queda
+  **bloqueado en el límite** (`addPoints` no-op si terminó; reintentar re-muestra el modal). "Nueva
+  Partida" despacha `FINALIZE_MATCH` (reset + `MATCH_FINALIZED` → pipeline de listeners); "✕" solo
+  descarta el anuncio (el gesto −1 sigue sirviendo para corregir un punto mal anotado).
 - [x] Tooling: **pnpm**, build de producción (`tsc` + Vite) en verde.
 
 > El core ya está listo para crecer: agregar reglas = agregar comandos/eventos; sincronizar = enviar
@@ -42,7 +47,9 @@ Marcador local funcionando sobre **arquitectura hexagonal con el core como autor
 ### Fase A — Completar el marcador local _(corto plazo)_
 El core ya soporta casi todo; falta exponerlo en la UI y endurecerlo.
 - [ ] **Selector de límite 15/30** en la UI (el core ya tiene `cambiarLimite`).
-- [ ] **UI de ganador / fin de partida** (`winner` y `finished` ya viven en el snapshot).
+- [x] **UI de ganador / fin de partida** — modal de victoria con confeti, doble validación
+  (finalizar vs. cerrar; puntaje bloqueado en el límite) y pipeline de finalización extensible
+  (`MATCH_FINALIZED_LISTENERS`).
 - [ ] **Fósforos 100% derivados del core**: que el conteo de fósforos se reconstruya desde el
   puntaje del core (hoy la presentación lo acompaña, no lo deriva).
 - [ ] **Persistencia local** en `localStorage` (sobrevivir a recargas).
