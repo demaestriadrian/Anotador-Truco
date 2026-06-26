@@ -25,7 +25,11 @@ Marcador local funcionando sobre **arquitectura hexagonal con el core como autor
 - [x] **La UI responde al core**: el drag despacha comandos (`sumarPunto`/`restarPunto`) y la vista
   refleja el snapshot del engine.
 - [x] **Sin salto visual al animar**: fósforos siempre en el DOM del storage, posicionados con GSAP
-  transforms; `createEffect` reactivo dispara la animación cuando cambia `zone`/`slotIndex`.
+  transforms (`overwrite:true`); `createEffect` reactivo dispara la animación cuando cambia `zone`/`slotIndex`.
+- [x] **Gestos de input desacoplados** (SRP/OCP): tap/click = +1, two-finger/click-der = −1, y arrastre
+  asistido (`gestureRecognizer` + detectores como estrategias), conviviendo con el drag & drop.
+- [x] **Reset de zona decidido por el core** (`evento-out`): al cruzar el límite malas↔buenas (15↔16)
+  el core emite `ZONE_RESET`/`ZONE_FILL` y la UI vacía/llena la zona; el puntaje sigue acumulado.
 - [x] Tooling: **pnpm**, build de producción (`tsc` + Vite) en verde.
 
 > El core ya está listo para crecer: agregar reglas = agregar comandos/eventos; sincronizar = enviar

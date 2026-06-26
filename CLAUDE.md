@@ -24,7 +24,7 @@ Es una SPA puramente cliente (sin backend por ahora).
 | Framework UI | **SolidJS 1.9** (JSX reactivo, `createStore`, `createSignal`, `createEffect`) |
 | Lenguaje | **TypeScript 5** (modo `strict`, sin emit — `noEmit`) |
 | Bundler / dev server | **Vite 7** (`vite-plugin-solid`, `vite-tsconfig-paths`) |
-| Animaciones | **GSAP 3.13** — plugin `Draggable` (arrastre) + tweens `gsap.to/set` (posicionamiento puro, sin Flip) |
+| Animaciones | **GSAP 3.15** — plugin `Draggable` (arrastre) + tweens `gsap.to/set` con `overwrite:true` (posicionamiento puro, sin Flip) |
 | Utilidades matemáticas | **D3 7** (`randomBates`, `randomLogNormal` para dispersión aleatoria de fósforos) |
 | Gestor de paquetes | **pnpm** (existe `pnpm-lock.yaml`) |
 
@@ -59,24 +59,34 @@ src/
 │   │   └── entities/
 │   │       ├── Match.ts           # Partida: equipos, límite 15/30, buenas/malas, ganador
 │   │       └── Team.ts            # Equipo: nombre, score, phase
-│   ├── ports/types.ts             # Contratos serializables: Command, GameSnapshot, TeamSnapshot
-│   └── application/GameEngine.ts  # Motor: dispatch(cmd) / getState() / subscribe()
+│   ├── ports/types.ts             # Contratos serializables: Command, GameSnapshot, TeamSnapshot + GameEvent/ResetReason
+│   └── application/
+│       ├── GameEngine.ts          # Motor: dispatch / getState / subscribe + subscribeEvents (emite eventos de reset)
+│       └── resetRules.ts          # Reglas (estrategias, OCP) que deciden ZONE_RESET/ZONE_FILL en el límite buenas
 ├── infrastructure/
-│   └── adapters/solidGameController.ts  # Puente core↔SolidJS (createStore + reconcile) + acciones
+│   └── adapters/solidGameController.ts  # Puente core↔SolidJS (reconcile) + acciones + onGameEvent (canal de eventos)
 └── ui/                            # Presentación (SolidJS)
     ├── components/
     │   ├── App.tsx                # Raíz; monta ScoreKeeper + #referenceDrag
-    │   ├── ScoreKeeper.tsx        # Layout; lee gameState del core; animación Flip global
+    │   ├── ScoreKeeper.tsx        # Layout; lee gameState; monta gestos (createScoreboardGestures) y puente de reset
     │   ├── PointSection.tsx       # Zona de un equipo: 3 grupos × 5 slots; mide tamaño de slot
     │   ├── MatchStick.tsx         # Un fósforo (imagen) + drag + animación
     │   ├── MatchStickStorage.tsx  # Depósito (expone id="matchstick-storage")
     │   ├── TeamName.tsx           # Input de nombre → cambiarNombre()
     │   └── Separator.tsx          # Separadores visuales (línea / cinta)
     ├── hooks/
-    │   ├── createMatchstickLogic.ts     # Drag & drop: hitTest, getSlotPosition, despacha comandos al core
-    │   └── createMatchstickAnimation.ts # Animaciones GSAP puras: setPosition, animateToPosition, Draggable
-    ├── store/presentationStore.ts # Estado de PRESENTACIÓN: array único `matches[]` con zone/slotIndex
-    ├── constants.ts               # ANIMATION_DURATION (duraciones de animación en segundos)
+    │   ├── createMatchstickLogic.ts     # Drag & drop: hitTest, commitDrop (boundary-aware), arrastre asistido, posicionamiento reactivo
+    │   ├── createMatchstickAnimation.ts # Animaciones GSAP puras: setPosition, animateToPosition (overwrite:true), Draggable
+    │   ├── createScoreboardGestures.ts  # Composition root de input: rutea gesto → acción
+    │   └── createCoreResetBridge.ts     # Puente: eventos del core (ZONE_RESET/ZONE_FILL) → clearZone/fillZone
+    ├── input/
+    │   ├── gestureRecognizer.ts   # Pointer Events → gestos (tap / two-finger-tap / drag); detectores como estrategias (OCP)
+    │   └── zones.ts               # Resolución de zona por COORDENADAS (no por DOM): resolveZoneFromPoint / resolveOriginZone
+    ├── store/
+    │   ├── presentationStore.ts   # Estado de PRESENTACIÓN: `matches[]` con zone/slotIndex + moveMatchstick + clearZone/fillZone
+    │   ├── scoreboardActions.ts   # addPointToZone / removePointFromZone (tap) + selectores (lastInStorage/lastInZone)
+    │   └── matchstickRegistry.ts  # id → handle del fósforo (para el arrastre asistido)
+    ├── constants.ts               # ANIMATION_DURATION + GESTURE (umbral de movimiento tap vs drag)
     ├── styles/                    # CSS modular (index importa el resto)
     └── utils/index.ts             # Posiciones aleatorias (D3) + tipos
 ```
@@ -89,12 +99,39 @@ src/
   `cambiarLimite`, `reiniciar` → cada una despacha un `Command` al engine.
 - **Presentación**: `src/ui/store/presentationStore.ts` (`presentationState`) mantiene solo lo visual
   de los fósforos: array único `matches: MatchStickData[]` donde cada elemento tiene `zone` (`'storage'|'A'|'B'`)
-  y `slotIndex`. `moveMatchstick(id, toZone)` actualiza zone/slotIndex con lógica de cascada; **no** toca el puntaje.
+  y `slotIndex`. `moveMatchstick(id, toZone)` actualiza zone/slotIndex con cascada; `clearZone`/`fillZone`
+  vacían/llenan una zona; **nada de esto toca el puntaje** (el reset es solo presentación).
 
-### 🔌 Por qué comando-in / snapshot-out
+### 🔌 Por qué comando-in / snapshot-out / **evento-out**
 
-`Command` y `GameSnapshot` son objetos planos **serializables**: los mismos contratos servirán para
-el futuro backend (despachar local hoy = enviar por WebSocket mañana). Ver `ROADMAP.md` Fase C.
+`Command`, `GameSnapshot` y `GameEvent` son objetos planos **serializables**: los mismos contratos
+servirán para el futuro backend (despachar local hoy = enviar por WebSocket mañana). Ver `ROADMAP.md` Fase C.
+
+### 🔄 Reset de zona decidido por el core (límite malas↔buenas)
+
+El **core decide** cuándo vaciar/llenar la zona de un equipo y lo **notifica**; la UI solo reacciona.
+Con `buenas(score) = max(0, score − 15)`, las reglas en `core/application/resetRules.ts` (estrategias,
+OCP) emiten eventos al comparar el snapshot `prev → next` en cada `dispatch`:
+
+- **Entrar a buenas** (cruzar 15→16) → `ZONE_RESET` → la UI **vacía** la zona (el punto nuevo queda como 1º de las buenas).
+- **Volver de buenas** (cruzar 16→15) → `ZONE_FILL` → la UI **rellena** la zona a 15 (malas completas).
+
+El core **mantiene el puntaje acumulado** (el `score-reference` muestra 15, 16, …). El puente
+`createCoreResetBridge` (suscrito vía `onGameEvent`) traduce cada evento en `clearZone`/`fillZone`.
+Hay **31 fósforos**: 30 para el máximo en mesa (ambos en 15 = 15+15) + 1 de respaldo para anotar el
+punto del ganador cuando ambos están en 15. _Diferido (seam OCP listo): fin de partida + UI de ganador._
+
+### 👆 Gestos de input (táctil + mouse)
+
+Una capa de input desacoplada (SRP/OCP) convive con el drag & drop:
+
+- `ui/input/gestureRecognizer.ts` traduce **Pointer Events** a gestos semánticos (`tap`, `two-finger-tap`,
+  `drag-start/move/end`) mediante **detectores como estrategias** (sumar swipe/3-dedos = nuevo detector, sin tocar el resto).
+- `createScoreboardGestures` (montado en `ScoreKeeper`, fase de captura sobre `.scorekeeper`) rutea gesto → acción:
+  **tap / click izq = +1**, **two-finger-tap / click der = −1**, **drag sobre zona vacía = arrastre asistido**
+  (engancha el último fósforo de esa zona). La zona se resuelve por **coordenadas** (`ui/input/zones.ts`), no por DOM.
+- Tap vs drag se diferencian por umbral de movimiento (`GESTURE.MOVE_THRESHOLD`); el arrastre directo sobre
+  un fósforo lo sigue manejando su `Draggable` de GSAP.
 
 ## 🎯 Cómo funciona el drag & drop (clave del proyecto)
 
@@ -104,7 +141,7 @@ re-parentan. El posicionamiento visual se logra únicamente con GSAP transforms 
 1. Cada `MatchStick` genera su posición aleatoria en el storage (`positionRandomX/Y`) y crea controles de animación (`createMatchstickAnimation`).
 2. En `onMount`, `createMatchstickLogic` calcula la posición inicial y hace `setPosition` instantáneo; luego registra el `Draggable`.
 3. Al soltar (`onRelease`), `hitTest` decide la zona destino (`#section-A` / `#section-B`).
-4. Si hay zona válida: se llama `moveMatchstick(id, toZone)` en el store de presentación y se despachan los comandos al core (`sumarPunto`/`restarPunto`).
+4. Si hay zona válida: `commitDrop(toZone)` llama `moveMatchstick(id, toZone)` y despacha al core (`sumarPunto`/`restarPunto`). Es **boundary-aware**: al soltar sobre una zona llena (15) suma primero (cruza a buenas → `ZONE_RESET` la vacía) y coloca el fósforo como 1º de las buenas.
 5. Un `createEffect(on(..., { defer: true }))` observa el cambio de `zone`/`slotIndex` en el store y calcula la posición del slot destino con `getSlotPosition` (vía `getBoundingClientRect` del div `.matchstickPosition[data-team][data-slot]`), luego anima con `animateToPosition`.
 6. `PointSection` (solo equipo A) mide el primer slot con `ResizeObserver` y lo guarda en `matchstickSize`; ese tamaño determina el ancho/alto de todos los fósforos.
 
@@ -121,9 +158,13 @@ re-parentan. El posicionamiento visual se logra únicamente con GSAP transforms 
 
 - El salto visual al finalizar la animación (bug del Flip approach) está **resuelto**: al no
   re-parentar ni usar `Flip`, los fósforos se posicionan suavemente con `gsap.to` puro.
+- Los tweens de GSAP usan **`overwrite: true`**: un tween nuevo mata al anterior del mismo fósforo.
+  Sin esto, al entrar a buenas un fósforo podía recibir dos tweens a la vez (vaciado→depósito 0.5s y
+  colocación→slot 0.3s) y el más largo ganaba, dejándolo en el depósito.
 - `PointSection` ahora expone slots vacíos con `data-team`, `data-slot`, `data-rotation` (sin renderizar `MatchStick` adentro).
   `MatchStickStorage` itera **todos** los fósforos (no solo los del storage).
-- Pendiente (ver `ROADMAP.md` Fase A): derivar los fósforos 100% del puntaje del core; UI de ganador y selector de límite 15/30.
+- Pendiente (ver `ROADMAP.md` Fase A): derivar los fósforos 100% del puntaje del core; UI de ganador,
+  fin de partida (seam OCP listo en `resetRules`) y selector de límite 15/30.
 - `README.md` todavía describe la arquitectura anterior (vanilla/hexagonal). Tomalo como contexto
   histórico; la fuente de verdad es este `CLAUDE.md` + `ROADMAP.md`.
 
