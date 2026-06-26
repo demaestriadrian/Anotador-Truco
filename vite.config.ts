@@ -5,7 +5,8 @@ import solidPlugin from 'vite-plugin-solid'
 export default defineConfig({
   plugins: [tsconfigPaths(), solidPlugin()],
   server: {
-    port: 5500
+    // Respeta la variable PORT si está definida (p. ej. tooling de preview); si no, usa 5500.
+    port: Number(process.env.PORT) || 5500
   },
   css: {
     preprocessorOptions: {

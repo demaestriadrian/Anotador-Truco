@@ -5,7 +5,8 @@
       "name": "dev",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["dev"],
-      "port": 5500
+      "port": 5500,
+      "autoPort": true
     },
     {
       "name": "dev-h (expuesto en red)",
