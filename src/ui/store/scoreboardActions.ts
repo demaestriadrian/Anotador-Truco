@@ -1,5 +1,6 @@
 import { moveMatchstick, presentationState } from '@/ui/store/presentationStore'
 import { sumarPunto, restarPunto, gameState } from '@/infrastructure/adapters/solidGameController'
+import { playSound } from '@/ui/audio/soundPlayer'
 import type { TeamId } from '@/core/domain/constants'
 
 type Zone = 'A' | 'B'
@@ -38,6 +39,8 @@ export const addPointToZone = (zone: Zone) => {
     if (slotsUsed(zone) >= 15) return   // sin lugar (caso > límite, diferido): score sube sin fósforo
     const id = lastInStorage()
     if (id) moveMatchstick(id, zone)
+    // Si este punto ganó, el evento MATCH_VICTORY ya disparó 'winner' (dispatch síncrono).
+    if (!gameState.finished) playSound('add')
 }
 
 /**
@@ -48,4 +51,5 @@ export const removePointFromZone = (zone: Zone) => {
     const id = lastInZone(zone)
     if (id) moveMatchstick(id, 'storage')
     restarPunto(mapTeam(zone))
+    playSound('remove')
 }
