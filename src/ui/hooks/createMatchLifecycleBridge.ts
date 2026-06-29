@@ -1,6 +1,7 @@
 import { onMount, onCleanup } from 'solid-js'
 import { onGameEvent } from '@/infrastructure/adapters/solidGameController'
 import { showVictory, hideVictory } from '@/ui/store/victoryStore'
+import { playSound } from '@/ui/audio/soundPlayer'
 import { MATCH_FINALIZED_LISTENERS } from '@/ui/lifecycle/matchFinalizedListeners'
 
 /**
@@ -16,6 +17,7 @@ export const createMatchLifecycleBridge = () => {
             switch (event.type) {
                 case 'MATCH_VICTORY':
                     showVictory(event.teamId)
+                    playSound('winner')
                     break
                 case 'MATCH_VICTORY_UNDONE':
                     hideVictory()
