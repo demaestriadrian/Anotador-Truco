@@ -58,8 +58,11 @@ export const createMatchstickAnimation = (getElement: () => HTMLElement | undefi
         })
     }
 
+    // Rebote a la posición actual del fósforo. Restaura el target COMPLETO (no solo x/y): así, si el
+    // arrastre asistido cambió la rotación a la del depósito, el rebote a un slot recupera la rotación
+    // del slot (data-rotation). En el drag directo el target ya coincide, así que es inocuo.
     const animateSnapBack = (
-        target: { x: number; y: number },
+        target: AnimationTarget,
         onComplete?: () => void
     ) => {
         const el = getElement()
@@ -68,6 +71,9 @@ export const createMatchstickAnimation = (getElement: () => HTMLElement | undefi
         gsap.to(el, {
             x: target.x,
             y: target.y,
+            width: target.width,
+            height: target.height,
+            rotation: target.rotation,
             duration: ANIMATION_DURATION.SNAP_BACK,
             ease: 'power2.out',
             overwrite: true,

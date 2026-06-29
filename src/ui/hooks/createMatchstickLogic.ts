@@ -2,6 +2,7 @@ import { createEffect, on, onMount, onCleanup } from 'solid-js'
 import { moveMatchstick, presentationState, consumeInstantSnap, type MatchStickData } from '@/ui/store/presentationStore'
 import { registerMatchstick, unregisterMatchstick } from '@/ui/store/matchstickRegistry'
 import { sumarPunto, restarPunto, gameState } from '@/infrastructure/adapters/solidGameController'
+import { playSound } from '@/ui/audio/soundPlayer'
 import type { TeamId } from '@/core/domain/constants'
 import type { MatchstickAnimationControls, AnimationTarget } from './createMatchstickAnimation'
 import { ANIMATION_DURATION } from '@/ui/constants'
@@ -94,12 +95,12 @@ export const createMatchstickLogic = (
         if (!data) return
 
         if (data.zone === 'storage' && origin) {
-            animation.animateSnapBack({ x: origin.x, y: origin.y })
+            animation.animateSnapBack(origin)
         } else if (data.zone !== 'storage' && data.slotIndex !== null) {
             const storage = getStorage()
             if (!storage) return
             const pos = getSlotPosition(data.zone, data.slotIndex, storage)
-            if (pos) animation.animateSnapBack({ x: pos.x, y: pos.y })
+            if (pos) animation.animateSnapBack(pos)
         }
     }
 
@@ -130,6 +131,7 @@ export const createMatchstickLogic = (
                 animation.disableDraggable()
                 moveMatchstick(data.id, 'storage')
                 restarPunto(mapTeam(currentZone))
+                playSound('remove')
             }
             return
         }
@@ -147,6 +149,8 @@ export const createMatchstickLogic = (
             sumarPunto(mapTeam(targetZone))
             if (slotsUsed(targetZone) < 15) {
                 moveMatchstick(data.id, targetZone)
+                // Si este punto ganó, el evento MATCH_VICTORY ya disparó 'winner' (dispatch síncrono).
+                if (!gameState.finished) playSound('add')
             } else {
                 // Sin lugar (caso > límite, diferido): revertir y rebotar.
                 restarPunto(mapTeam(targetZone))
@@ -163,6 +167,8 @@ export const createMatchstickLogic = (
         if (slotsUsed(targetZone) < 15) {
             moveMatchstick(data.id, targetZone)
             restarPunto(mapTeam(currentZone))
+            // Si este punto ganó, el evento MATCH_VICTORY ya disparó 'winner' (dispatch síncrono).
+            if (!gameState.finished) playSound('transfer')
         } else {
             // Destino sin lugar (caso > límite, diferido): revertir y rebotar.
             restarPunto(mapTeam(targetZone))
