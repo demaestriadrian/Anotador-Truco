@@ -1,6 +1,7 @@
 import { Team } from './Team';
 import type { TeamId, Limit } from '@/core/domain/constants';
 import { LIMITES_VALIDOS } from '@/core/domain/constants';
+import type { PersistedMatchState } from '@/core/ports/persistence';
 
 export class Match {
   private _teamA: Team;
@@ -54,6 +55,17 @@ export class Match {
   reset(): void {
     this._teamA.reset();
     this._teamB.reset();
+  }
+
+  // Restaura la partida desde un estado persistido: nombres (si no están vacíos), scores y límite.
+  // Los campos derivados (phase, winner, finished) se recalculan solos a partir de esto.
+  hydrate(state: PersistedMatchState): void {
+    this.setLimit(state.limit);
+    for (const team of [this._teamA, this._teamB]) {
+      const saved = state.teams[team.id];
+      if (saved.name.trim()) team.setName(saved.name);
+      team.restore(saved.score);
+    }
   }
 
   // Devuelve el id del equipo ganador (score >= límite); A tiene prioridad si ambos llegan. Si no hay, null.

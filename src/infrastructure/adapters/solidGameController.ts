@@ -8,12 +8,14 @@
 import { createStore, reconcile } from 'solid-js/store';
 
 import { GameEngine } from '@/core/application/GameEngine';
+import { localStorageMatchPersistence } from '@/infrastructure/adapters/localStorageMatchPersistence';
 import type { GameSnapshot, GameEventListener } from '@/core/ports/types';
 import type { TeamId, Limit } from '@/core/domain/constants';
 
 // Instancia única (singleton de módulo): un solo engine para toda la app.
-// Es la autoridad del marcador; todo lo demás es presentación.
-const engine = new GameEngine();
+// Es la autoridad del marcador; todo lo demás es presentación. Con el puerto de persistencia
+// inyectado, el engine restaura solo la partida guardada al construirse y guarda cada cambio.
+const engine = new GameEngine({ persistence: localStorageMatchPersistence });
 
 // Store de Solid inicializado con el snapshot actual del engine.
 // `state` es el espejo reactivo; `setState` solo lo usa este módulo para sincronizar.

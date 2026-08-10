@@ -36,6 +36,15 @@ export const ExitBuenasRule: GameEventRule = {
             : []),
 }
 
+// Reinicio de partida (comando RESET explícito): se vacían ambas zonas de fósforos. El score ya
+// quedó en 0-0 (lo hizo el Match); acá solo se notifica a la presentación para recoger el tablero.
+export const MatchResetRule: GameEventRule = {
+    evaluate: (_prev, _next, cmd) =>
+        cmd.type === 'RESET'
+            ? TEAMS.map(id => ({ type: 'ZONE_RESET', teamId: id, reason: 'match-reset' } as const))
+            : [],
+}
+
 // Victoria alcanzada / re-anunciada: cualquier intento de SUMAR que deje un ganador emite el aviso.
 // Cubre dos casos con la misma regla: (1) el primer cruce del límite (null → equipo) y (2) seguir
 // intentando sumar con la partida ya ganada (el core bloquea el punto, pero igual re-emite el aviso
@@ -70,6 +79,7 @@ export const MatchFinalizedRule: GameEventRule = {
 export const DEFAULT_EVENT_RULES: GameEventRule[] = [
     EnterBuenasRule,
     ExitBuenasRule,
+    MatchResetRule,
     VictoryRule,
     VictoryUndoneRule,
     MatchFinalizedRule,
