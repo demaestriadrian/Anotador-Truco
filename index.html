@@ -4,8 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+    <!-- viewport-fit=cover: necesario para que env(safe-area-inset-*) devuelva valores reales en standalone -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Anotador de fósforos para el Truco Argentino: arrastrá y soltá para llevar el puntaje.">
+    <!-- Mismo verde que `html` en index.css: evita el flash de barra al abrir -->
+    <meta name="theme-color" content="#106138">
+
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+
+    <!-- iOS: no lee el manifest, necesita estas metas para instalarse en standalone -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Truco">
 
     <title>Anotador de Truco</title>
 

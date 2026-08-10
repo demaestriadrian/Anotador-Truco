@@ -27,9 +27,11 @@ Es una SPA puramente cliente (sin backend por ahora).
 | Animaciones | **GSAP 3.15** — plugin `Draggable` (arrastre) + tweens `gsap.to/set` con `overwrite:true` (posicionamiento puro, sin Flip) |
 | Utilidades matemáticas | **D3 7** (`randomBates`, `randomLogNormal` para dispersión aleatoria de fósforos) |
 | Gestor de paquetes | **pnpm** (existe `pnpm-lock.yaml`) |
+| PWA | **vite-plugin-pwa 1.3** (Workbox `generateSW`) + `workbox-window` + `sharp` para generar iconos |
 
-> Pensado para un futuro despliegue en **Cloudflare** (Workers/Pages) y un backend con **Hono**
-> (runtime-agnóstico: corre en Cloudflare Workers, Node, Deno o Bun). Por eso el gestor es pnpm.
+> Ya desplegado en **Cloudflare Pages** (https://anotador-truco.pages.dev/, build ligado al repo).
+> A futuro, un backend con **Hono** (runtime-agnóstico: corre en Cloudflare Workers, Node, Deno o
+> Bun). Por eso el gestor es pnpm.
 
 ## 🛠️ Comandos
 
@@ -39,6 +41,7 @@ pnpm dev             # Servidor de desarrollo (Vite, http://localhost:5500)
 pnpm dev-h           # Igual que dev pero expuesto en la red (--host)
 pnpm build           # Type-check (tsc) + build de producción (vite build) -> dist/
 pnpm preview         # Previsualizar el build de producción
+pnpm icons           # Regenerar los iconos PNG de la PWA (solo si cambió el arte)
 ```
 
 No hay suite de tests ni linter activo en el flujo actual (existe `.eslintrc.json` heredado,
@@ -52,7 +55,7 @@ Arquitectura **hexagonal**: el `core` (dominio + aplicación) es la autoridad de
 
 ```
 src/
-├── main.tsx                       # Bootstrap: render(<App/>, #root)
+├── main.tsx                       # Bootstrap: registerSW (PWA) + render(<App/>, #root)
 ├── core/                          # ⭐ Núcleo agnóstico al framework (sin SolidJS ni DOM)
 │   ├── domain/                    # Dominio puro
 │   │   ├── constants.ts           # Tipos base TeamId/Phase/Limit + UMBRAL_BUENAS, LIMITES_VALIDOS
@@ -172,6 +175,31 @@ re-parentan. El posicionamiento visual se logra únicamente con GSAP transforms 
 4. Si hay zona válida: `commitDrop(toZone)` llama `moveMatchstick(id, toZone)` y despacha al core (`sumarPunto`/`restarPunto`). Es **boundary-aware**: al soltar sobre una zona llena (15) suma primero (cruza a buenas → `ZONE_RESET` la vacía) y coloca el fósforo como 1º de las buenas.
 5. Un `createEffect(on(..., { defer: true }))` observa el cambio de `zone`/`slotIndex` en el store y calcula la posición del slot destino con `getSlotPosition` (vía `getBoundingClientRect` del div `.matchstickPosition[data-team][data-slot]`), luego anima con `animateToPosition`.
 6. `PointSection` (solo equipo A) mide el primer slot con `ResizeObserver` y lo guarda en `matchstickSize`; ese tamaño determina el ancho/alto de todos los fósforos.
+
+## 📱 PWA (instalable + offline)
+
+La app es una **PWA instalable**. Es una capa de _plataforma_, ortogonal a la arquitectura
+hexagonal: no toca `core/`, `infrastructure/` ni `ui/`.
+
+- **`vite-plugin-pwa`** configurado en [`vite.config.ts`](vite.config.ts) en modo `generateSW`
+  (Workbox). Genera `dist/manifest.json` + `dist/sw.js` y le inyecta el `<link rel="manifest">` al HTML.
+- **`manifestFilename: 'manifest.json'`** en vez del default `.webmanifest`: Cloudflare Pages sirve
+  `.json` como `application/json` de forma garantizada y manda `x-content-type-options: nosniff`,
+  así que conviene no depender de su tabla MIME.
+- **`globPatterns` ampliado** a `webp` y `mp3`: sin eso el paño y los sonidos no quedarían offline.
+  `ico` se excluye a propósito (`public/img/favicon.ico` pesa ~750 KB).
+- **`registerSW({ immediate: true })`** en [`src/main.tsx`](src/main.tsx), con `registerType: 'autoUpdate'`:
+  el SW nuevo toma control solo. Los tipos del módulo virtual vienen de la referencia a
+  `vite-plugin-pwa/client` en [`src/vite-env.d.ts`](src/vite-env.d.ts).
+- **`workbox-window` es dependencia directa a propósito**: `virtual:pwa-register` la importa desde el
+  bundle de la app y el `node_modules` estricto de pnpm no la resuelve si es solo transitiva.
+- **`devOptions: { enabled: false }`** → no hay service worker en `pnpm dev` (para no pelear con la
+  caché). La PWA se prueba con `pnpm build && pnpm preview`.
+- **Iconos**: `public/icons/`. El arte fuente es `icon.svg` (**provisorio**, con todo el dibujo dentro
+  de la zona segura maskable) y los PNG los deriva `pnpm icons`
+  ([`scripts/generate-icons.mjs`](scripts/generate-icons.mjs)). Si se deja un
+  `assets/icon-source.png`, el script lo prefiere y le aplica el margen de zona segura al maskable.
+  **Los PNG se commitean**: el build de Pages no corre `sharp`.
 
 ## 📐 Convenciones
 
