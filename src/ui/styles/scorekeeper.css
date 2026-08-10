@@ -94,7 +94,10 @@
   position: relative;
 }
 
-section {
+/* Zonas de puntaje del tablero (#section-A / #section-B). El selector va acotado a `.points`:
+   como selector de tipo suelto alcanzaba a CUALQUIER <section> de la app (p.ej. las secciones del
+   panel de configuraciones), que heredaban space-around/align-items y quedaban deformadas. */
+.points section {
   flex: 1;
   height: 100%;
   min-width: 30%;
