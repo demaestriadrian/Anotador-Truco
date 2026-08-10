@@ -9,7 +9,12 @@ interface TeamNameProps {
 }
 
 const TeamName = (props: TeamNameProps) => {
-    const [name, setName] = createSignal(props.initialName ?? '')
+    // Si el nombre inicial (restaurado por el core) es solo el default ("Nosotros"/"Ellos"),
+    // se deja vacío para seguir mostrando el placeholder; un nombre custom sí se muestra.
+    const initial = props.initialName ?? ''
+    const [name, setName] = createSignal(
+        initial.toLowerCase() === props.placeholder.toLowerCase() ? '' : initial
+    )
 
     const handleInput = (e: InputEvent) => {
         const newName = (e.currentTarget as HTMLInputElement).value

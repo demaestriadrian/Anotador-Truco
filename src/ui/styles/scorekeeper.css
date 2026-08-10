@@ -89,8 +89,8 @@
 
 .matchstickStorage {
   /* background: rgba(255, 235, 205, 0.151); */
-  width: 100%;
-  flex: 1.5;
+  /* El tamaño se lo da la fila inferior (.bottom-bar en actionButtons.css), que reparte el
+     espacio entre los botones de acción y el depósito. */
   position: relative;
 }
 

@@ -3,6 +3,9 @@
 @import url(./separator.css);
 @import url(./table.css);
 @import url(./victoryModal.css);
+@import url(./actionButtons.css);
+@import url(./settingsPanel.css);
+@import url(./historyPanel.css);
 
 * {
   margin: 0;

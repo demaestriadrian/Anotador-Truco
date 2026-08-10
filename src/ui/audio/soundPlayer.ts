@@ -14,6 +14,11 @@ const SOUND_SRC: Record<SoundKind, string> = {
     winner: '/sound/winner.mp3',        // un equipo gana la partida
 }
 
+// Silencio global. Este módulo no conoce a settings (DIP): el settingsStore le aplica el estado.
+let muted = false
+
+export const setMuted = (m: boolean) => { muted = m }
+
 // Cache lazy de un `Audio` por tipo (precargado). Lazy para no instanciar nada hasta el primer uso.
 const cache = new Map<SoundKind, HTMLAudioElement>()
 
@@ -33,6 +38,7 @@ const getAudio = (kind: SoundKind): HTMLAudioElement => {
  * los navegadores hasta la primera interacción del usuario.
  */
 export const playSound = (kind: SoundKind) => {
+    if (muted) return
     const audio = getAudio(kind)
     audio.currentTime = 0
     audio.play().catch(() => {})

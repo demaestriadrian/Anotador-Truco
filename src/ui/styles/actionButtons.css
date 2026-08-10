@@ -1,0 +1,62 @@
+/* Fila inferior del tablero: botón de acceso rápido | depósito de fósforos | configuraciones.
+   Los botones le ceden un poco de ancho al depósito en móvil; en pantallas grandes (≥1024px)
+   pasan a la parte superior de la pantalla y el depósito recupera todo el ancho. */
+.bottom-bar {
+  width: 100%;
+  flex: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.35rem;
+}
+
+/* Dentro de la fila, el depósito ocupa todo el espacio restante. */
+.bottom-bar .matchstickStorage {
+  flex: 1;
+  height: 100%;
+}
+
+.action-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: whitesmoke; /* los íconos Lucide heredan via stroke: currentColor */
+  line-height: 1;
+  cursor: pointer;
+  /* Por encima de los fósforos en reposo (z 10/100), por debajo del arrastrado (1000) y modales. */
+  z-index: 500;
+  transition: background-color 0.15s ease, transform 0.08s ease;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.action-btn:active {
+  transform: scale(0.92);
+}
+
+/* Laptop/PC o superior: botones fijos en la parte superior de la PANTALLA (fuera del tablero
+   9/16 centrado); el depósito vuelve a ocupar el ancho completo de la fila. */
+@media (min-width: 1024px) {
+  .action-btn {
+    position: fixed;
+    top: 1rem;
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
+  .action-btn--quick {
+    left: 1rem;
+  }
+
+  .action-btn--settings {
+    right: 1rem;
+  }
+}

@@ -1,5 +1,6 @@
 import { Show, createEffect } from 'solid-js'
 import confetti from 'canvas-confetti'
+import X from 'lucide-solid/icons/x'
 import { gameState, finalizarPartida } from '@/infrastructure/adapters/solidGameController'
 import { victory, hideVictory } from '@/ui/store/victoryStore'
 
@@ -41,7 +42,7 @@ const VictoryModal = () => {
                             aria-label="Cerrar"
                             onClick={() => hideVictory()}
                         >
-                            ✕
+                            <X size={16} />
                         </button>
                         <p class="victory-card__eyebrow">¡Partida terminada!</p>
                         <h2 class="victory-card__winner">Ganó {gameState.teams[v().teamId].name}</h2>
