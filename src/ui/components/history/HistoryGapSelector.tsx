@@ -9,11 +9,14 @@ const GAP_OPTIONS: { seconds: number; label: string }[] = [
     { seconds: 120, label: '2m' },
 ]
 
-// Ítem: umbral de agrupación del historial. Anotaciones separadas por menos del umbral caen en
-// el mismo grupo; cambiarlo re-agrupa el historial al instante (la agrupación es derivada).
-const HistoryGapItem = () => (
-    <div class="settings-item">
-        <span class="settings-item__label">Agrupar anotaciones</span>
+/**
+ * Barra de agrupación del historial. Vive acá (y no en configuraciones) para que el efecto se
+ * vea al instante: la agrupación es derivada, así que tocar una opción re-arma los grupos
+ * debajo sin recargar nada.
+ */
+const HistoryGapSelector = () => (
+    <div class="history-toolbar">
+        <span class="history-toolbar__label">Agrupar cada</span>
         <div class="settings-segmented">
             <For each={GAP_OPTIONS}>
                 {(opt) => (
@@ -30,4 +33,4 @@ const HistoryGapItem = () => (
     </div>
 )
 
-export default HistoryGapItem
+export default HistoryGapSelector

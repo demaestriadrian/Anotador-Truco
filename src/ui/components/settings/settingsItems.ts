@@ -1,25 +1,40 @@
-// Registro de ítems del panel de configuraciones (OCP): el panel itera este array y renderiza
-// cada componente. Agregar una configuración nueva = crear su componente en `items/` y sumar
-// una entrada acá; no se toca el panel ni los ítems existentes.
+// Registro de secciones e ítems del panel de configuraciones (OCP): el panel itera esto y
+// renderiza cada componente bajo su sección. Agregar una configuración = crear su componente en
+// `items/` y sumar una línea acá; agregar una sección = una línea en SETTINGS_SECTIONS.
+// El panel no conoce ningún ítem en particular.
 import type { Component } from 'solid-js'
 import RestartMatchItem from './items/RestartMatchItem'
 import SoundToggleItem from './items/SoundToggleItem'
 import LimitSelectItem from './items/LimitSelectItem'
 import QuickActionSelectItem from './items/QuickActionSelectItem'
 import HistoryItem from './items/HistoryItem'
-import HistoryGapItem from './items/HistoryGapItem'
+
+export type SettingsSectionId = 'match' | 'history' | 'preferences' | 'danger'
+
+export interface SettingsSection {
+    id: SettingsSectionId
+    title: string
+}
+
+// El orden acá es el orden visual. Lo destructivo va último, lejos del pulgar.
+export const SETTINGS_SECTIONS: SettingsSection[] = [
+    { id: 'match', title: 'Partida' },
+    { id: 'history', title: 'Historial' },
+    { id: 'preferences', title: 'Preferencias' },
+    { id: 'danger', title: 'Zona de peligro' },
+]
 
 export interface SettingsItemDef {
     id: string
+    section: SettingsSectionId
     Item: Component
 }
 
 export const SETTINGS_ITEMS: SettingsItemDef[] = [
-    { id: 'restart-match', Item: RestartMatchItem },
-    { id: 'sound-toggle', Item: SoundToggleItem },
-    { id: 'limit-select', Item: LimitSelectItem },
-    { id: 'quick-action-select', Item: QuickActionSelectItem },
-    { id: 'history-open', Item: HistoryItem },
-    { id: 'history-gap', Item: HistoryGapItem },
-    // 🔌 Futuro: tema, estadísticas… = un componente nuevo + una línea acá.
+    { id: 'limit-select', section: 'match', Item: LimitSelectItem },
+    { id: 'history-open', section: 'history', Item: HistoryItem },
+    { id: 'sound-toggle', section: 'preferences', Item: SoundToggleItem },
+    { id: 'quick-action-select', section: 'preferences', Item: QuickActionSelectItem },
+    { id: 'restart-match', section: 'danger', Item: RestartMatchItem },
+    // 🔌 Futuro: tema, estadísticas… = un componente nuevo + una línea acá con su sección.
 ]

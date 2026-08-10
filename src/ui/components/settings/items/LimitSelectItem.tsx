@@ -1,12 +1,13 @@
 import { For } from 'solid-js'
+import Target from 'lucide-solid/icons/target'
 import { gameState, cambiarLimite } from '@/infrastructure/adapters/solidGameController'
 import { LIMITES_VALIDOS } from '@/core/domain/constants'
+import SettingsRow from '../SettingsRow'
 
 // Ítem: límite de puntaje de la partida (15/30). Itera los límites válidos del DOMINIO
 // (no hardcodea): agregar un límite nuevo al core lo muestra acá automáticamente.
 const LimitSelectItem = () => (
-    <div class="settings-item">
-        <span class="settings-item__label">Puntaje total</span>
+    <SettingsRow icon={Target} label="Partida a" hint="Puntos para ganar">
         <div class="settings-segmented">
             <For each={[...LIMITES_VALIDOS]}>
                 {(limit) => (
@@ -20,7 +21,7 @@ const LimitSelectItem = () => (
                 )}
             </For>
         </div>
-    </div>
+    </SettingsRow>
 )
 
 export default LimitSelectItem

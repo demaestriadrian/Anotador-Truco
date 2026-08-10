@@ -18,6 +18,17 @@ export interface ScoreHistoryGroup {
     end: number          // timestamp de la última
 }
 
+// Tramo: anotaciones consecutivas del mismo equipo y mismo signo, fusionadas para leerse de un
+// vistazo (+3 en vez de +1 +1 +1). Es una VISTA derivada: la bitácora fina no se toca.
+export interface ScoreHistoryRun {
+    teamId: TeamId
+    delta: number        // suma del tramo: +3, −1, +2
+    count: number        // cuántas anotaciones se fusionaron
+    scoreAfter: number   // score tras la última anotación del tramo
+    start: number        // timestamp de la primera
+    end: number          // timestamp de la última
+}
+
 /**
  * Agrupa las entradas por cercanía temporal: entradas consecutivas separadas por menos de
  * `gapMs` caen en el mismo grupo; un hueco mayor o igual abre un grupo nuevo.
@@ -38,4 +49,37 @@ export const groupByTimeGap = (
         }
     }
     return groups
+}
+
+/**
+ * Fusiona anotaciones CONSECUTIVAS del mismo equipo y mismo signo en un solo tramo.
+ * El tramo se corta cuando cambia el equipo o cambia el signo (sumar → restar), así una racha
+ * se lee "+3 −1" en vez de "+1 +1 +1 −1", y anotar al rival interrumpe la racha propia.
+ * Es derivación pura de presentación: no modifica ni reordena la bitácora.
+ */
+export const collapseRuns = (entries: ScoreHistoryEntry[]): ScoreHistoryRun[] => {
+    const runs: ScoreHistoryRun[] = []
+    for (const entry of entries) {
+        const current = runs[runs.length - 1]
+        const continues = current
+            && current.teamId === entry.teamId
+            && Math.sign(current.delta) === Math.sign(entry.delta)
+
+        if (continues) {
+            current.delta += entry.delta
+            current.count++
+            current.scoreAfter = entry.scoreAfter
+            current.end = entry.timestamp
+        } else {
+            runs.push({
+                teamId: entry.teamId,
+                delta: entry.delta,
+                count: 1,
+                scoreAfter: entry.scoreAfter,
+                start: entry.timestamp,
+                end: entry.timestamp,
+            })
+        }
+    }
+    return runs
 }

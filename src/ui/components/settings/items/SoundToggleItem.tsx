@@ -1,9 +1,10 @@
+import Volume2 from 'lucide-solid/icons/volume-2'
 import { settings, toggleSound } from '@/ui/store/settingsStore'
+import SettingsRow from '../SettingsRow'
 
 // Ítem: activar/desactivar los efectos de sonido (persistido en settings).
 const SoundToggleItem = () => (
-    <div class="settings-item">
-        <span class="settings-item__label">Sonido</span>
+    <SettingsRow icon={Volume2} label="Sonido" hint="Efectos al anotar">
         <button
             class="settings-toggle"
             classList={{ 'settings-toggle--on': settings.soundEnabled }}
@@ -14,7 +15,7 @@ const SoundToggleItem = () => (
         >
             <span class="settings-toggle__thumb" />
         </button>
-    </div>
+    </SettingsRow>
 )
 
 export default SoundToggleItem

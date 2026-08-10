@@ -1,15 +1,16 @@
 import History from 'lucide-solid/icons/history'
 import { openHistory } from '@/ui/store/historyPanelStore'
+import { SettingsNavRow } from '../SettingsRow'
 
-// Ítem: abre el panel de historial de puntos (drawer que desliza por encima de este).
+// Ítem: abre el panel de historial (drawer que desliza por encima de este).
+// Fila navegable: el chevron indica que lleva a otra pantalla.
 const HistoryItem = () => (
-    <div class="settings-item">
-        <span class="settings-item__label">Historial de puntos</span>
-        <button class="settings-btn settings-btn--with-icon" onClick={openHistory}>
-            <History size={16} />
-            Ver
-        </button>
-    </div>
+    <SettingsNavRow
+        icon={History}
+        label="Ver historial"
+        hint="Puntos anotados por mano"
+        onClick={openHistory}
+    />
 )
 
 export default HistoryItem
