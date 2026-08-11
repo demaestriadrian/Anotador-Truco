@@ -14,25 +14,24 @@
   width: 100%;
   /* Proporcional al ANCHO del tablero (26% = el mismo alto que daba 12svh en móvil), igual que
      su contenido. Atado al alto del viewport, en tablet quedaba relativamente más bajo. */
-  height: calc(var(--board-w) * 0.26);
   flex-shrink: 0;
-  /* Dos filas: arriba los indicadores de fase (en las esquinas), abajo los nombres y el límite.
-     `align-items: end` + el padding inferior los despegan de la línea divisoria. */
+  /* Sin alto fijo: lo define el contenido (que ya escala con --board-w), así no quedan huecos
+     muertos entre los indicadores y los nombres. El aire se controla con row-gap y el padding.
+     El límite ocupa AMBAS filas para quedar centrado en todo el header, no al ras de los nombres. */
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  grid-template-rows: auto 1fr;
   grid-template-areas:
-    "refA  .      refB"
+    "refA  limite refB"
     "nameA limite nameB";
   align-items: end;
   column-gap: calc(var(--board-w) * 0.015);
+  row-gap: calc(var(--board-w) * 0.018);
   border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-  padding: calc(var(--board-w) * 0.018) calc(var(--board-w) * 0.021) calc(var(--board-w) * 0.03);
+  padding: calc(var(--board-w) * 0.022) calc(var(--board-w) * 0.021);
 }
 
 .team-name-container.team-A { grid-area: nameA; }
 .team-name-container.team-B { grid-area: nameB; }
-.max-score { grid-area: limite; }
 .score-reference--a { grid-area: refA; justify-self: start; }
 .score-reference--b { grid-area: refB; justify-self: end; }
 
@@ -49,6 +48,7 @@
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
+  opacity: 0.8; /* dato de referencia: presente pero sin competir con nombres y límite */
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
@@ -101,6 +101,10 @@
 }
 
 .max-score {
+  /* Abarca las dos filas del header y se centra en ellas (no se alinea con los nombres). */
+  grid-area: limite;
+  align-self: center;
+  line-height: 1; /* sin interlineado propio, para no estirar el header */
   /* ≈10.7% del ancho del tablero (equivale a 2.5rem en móvil). */
   font-size: clamp(1.75rem, calc(var(--board-w) * 0.107), 4.25rem);
   font-weight: 800;
