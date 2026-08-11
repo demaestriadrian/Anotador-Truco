@@ -13,6 +13,21 @@
   box-sizing: border-box;
 }
 
+:root {
+  /* ⭐ Unidad base de escala: el ancho REAL del tablero.
+     Replica en CSS lo que resuelve el layout de `.scorekeeper` (aspect-ratio 9/16 + height 100%
+     + max-width 100svw): el tablero es tan ancho como permita el alto, salvo que la pantalla sea
+     más angosta.
+
+     Todo el contenido del tablero se dimensiona como FRACCIÓN de esta variable en vez de usar
+     tamaños fijos en rem. Así el tablero se ve igual en móvil, tablet y PC —solo más grande—,
+     en lugar de que el tablero crezca mientras textos y botones quedan chicos.
+
+     Se define en :root (y no como container query) para que también la puedan usar los botones
+     `position: fixed` de escritorio, que se posicionan respecto al viewport. */
+  --board-w: min(100svw, calc(100svh * 9 / 16));
+}
+
 html {
   width: 100dvw;
   height: 100dvh;

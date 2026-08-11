@@ -1,7 +1,7 @@
 #separator-h {
   width: 100%;
   background: rgba(255, 255, 255, 0.2);
-  height: 2px;
+  height: clamp(2px, calc(var(--board-w) * 0.0053), 4px);
   margin: 0;
   border-radius: 2px;
 }
@@ -9,9 +9,8 @@
 #separator-v {
   position: relative;
   height: 100%;
-  width: 12px;
-  /* Slightly wider for the ribbon effect */
-  min-width: 8px;
+  /* Cinta central: ≈3.2% del ancho del tablero (12px en móvil). */
+  width: clamp(8px, calc(var(--board-w) * 0.032), 20px);
   background: transparent;
   display: flex;
   justify-content: center;

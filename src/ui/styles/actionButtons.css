@@ -1,13 +1,17 @@
 /* Fila inferior del tablero: botón de acceso rápido | depósito de fósforos | configuraciones.
    Los botones le ceden un poco de ancho al depósito en móvil; en pantallas grandes (≥1024px)
    pasan a la parte superior de la pantalla y el depósito recupera todo el ancho. */
+/* El alto se deriva del ANCHO del tablero (24.8% = el mismo valor que daba `flex: 1.5` en móvil).
+   Antes dependía del alto disponible, así que en pantallas proporcionalmente más anchas —como
+   tablet— el depósito encogía respecto de los fósforos, que sí escalan con el ancho. */
 .bottom-bar {
   width: 100%;
-  flex: 1.5;
+  flex: none;
+  height: calc(var(--board-w) * 0.248);
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0 0.35rem;
+  gap: calc(var(--board-w) * 0.012);
+  padding: 0 calc(var(--board-w) * 0.015);
 }
 
 /* Dentro de la fila, el depósito ocupa todo el espacio restante. */
@@ -17,8 +21,9 @@
 }
 
 .action-btn {
-  width: 2.75rem;
-  height: 2.75rem;
+  /* ≈11.7% del ancho del tablero (2.75rem en móvil). */
+  width: clamp(2.4rem, calc(var(--board-w) * 0.117), 4.5rem);
+  height: clamp(2.4rem, calc(var(--board-w) * 0.117), 4.5rem);
   flex-shrink: 0;
   display: grid;
   place-items: center;
@@ -45,11 +50,10 @@
 /* Laptop/PC o superior: botones fijos en la parte superior de la PANTALLA (fuera del tablero
    9/16 centrado); el depósito vuelve a ocupar el ancho completo de la fila. */
 @media (min-width: 1024px) {
+  /* El tamaño ya escala con el tablero: acá solo cambia la POSICIÓN. */
   .action-btn {
     position: fixed;
     top: 1rem;
-    width: 3.25rem;
-    height: 3.25rem;
   }
 
   .action-btn--quick {

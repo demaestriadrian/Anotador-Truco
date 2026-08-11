@@ -73,6 +73,8 @@ export const createMatchstickLogic = (
         const storageRect = storage.getBoundingClientRect()
         const data = getData()
 
+        // La posición se reparte sobre TODO el rect del depósito: que los fósforos desborden sus
+        // bordes es intencional (efecto de montón desparramado).
         return {
             x: randomPos.x * storageRect.width,
             y: randomPos.y * storageRect.height,
