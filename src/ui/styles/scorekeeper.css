@@ -24,8 +24,10 @@
     "refA  limite refB"
     "nameA limite nameB";
   align-items: end;
-  column-gap: calc(var(--board-w) * 0.015);
-  row-gap: calc(var(--board-w) * 0.018);
+  /* Separa los nombres del límite. Al ser el gap del grid (y no un padding por lado) alcanza
+     un solo valor, la simetría queda garantizada y no le come ancho útil a los inputs. */
+  column-gap: calc(var(--board-w) * 0.032);
+  row-gap: calc(var(--board-w) * 0.03);
   border-bottom: 2px solid rgba(255, 255, 255, 0.1);
   padding: calc(var(--board-w) * 0.022) calc(var(--board-w) * 0.021);
 }
@@ -94,6 +96,11 @@
   letter-spacing: 0.05em; /* relativo a la fuente: acompaña el escalado */
 }
 
+/* Los nombres arrancan del lado del límite: el de la izquierda termina contra él y el de la
+   derecha empieza en él, así crecen hacia afuera en vez de alejarse del centro. */
+.team-A .team-name-input { text-align: right; }
+.team-B .team-name-input { text-align: left; }
+
 .team-name-input::placeholder {
   color: rgba(245, 245, 245, 0.814);
   text-transform: none;
@@ -108,7 +115,7 @@
   /* ≈10.7% del ancho del tablero (equivale a 2.5rem en móvil). */
   font-size: clamp(1.75rem, calc(var(--board-w) * 0.107), 4.25rem);
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.15); /* Subtle watermark style */
+  color: rgba(255, 255, 255, 0.3); /* Subtle watermark style */
   text-align: center;
   user-select: none;
 }
