@@ -1,12 +1,10 @@
 import { createEffect } from 'solid-js'
 import { gameState } from '@/infrastructure/adapters/solidGameController'
 import { presentationState, fillZone } from '@/ui/store/presentationStore'
-import { UMBRAL_BUENAS } from '@/core/domain/constants'
-
-// Fósforos visibles en la zona para un score dado: en malas se ven todos los puntos; al entrar a
-// buenas la zona se vació (ZONE_RESET) y muestra solo las buenas (score − umbral).
-const visibleMatches = (score: number): number =>
-    score <= UMBRAL_BUENAS ? score : score - UMBRAL_BUENAS
+// Fósforos visibles en la zona: en malas se ven todos los puntos; al entrar a buenas la zona se
+// vació (ZONE_RESET) y muestra solo las buenas. Es la regla del dominio, compartida con el
+// indicador de puntaje del header para que ambos muestren siempre lo mismo.
+import { puntosDeFase } from '@/core/domain/constants'
 
 /**
  * Sincroniza la presentación con una partida RESTAURADA por el core (desde el puerto de
@@ -21,7 +19,7 @@ export const createMatchRestoreSync = () => {
         if (synced || !presentationState.matchstickSize) return
         synced = true
 
-        fillZone('A', false, visibleMatches(gameState.teams.team_a.score))
-        fillZone('B', false, visibleMatches(gameState.teams.team_b.score))
+        fillZone('A', false, puntosDeFase(gameState.teams.team_a.score))
+        fillZone('B', false, puntosDeFase(gameState.teams.team_b.score))
     })
 }

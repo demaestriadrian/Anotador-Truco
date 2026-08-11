@@ -7,6 +7,7 @@ import PointSection from './PointSection'
 import MatchStickStorage from './MatchStickStorage'
 import TeamName from './TeamName'
 import Separator from './Separator'
+import ScoreReference from './ScoreReference'
 import { QuickActionButton, SettingsButton } from './ActionButtons'
 
 const ScoreKeeper = () => {
@@ -26,8 +27,11 @@ const ScoreKeeper = () => {
 
     return (
         <div class="scorekeeper" ref={rootRef} style={{ 'touch-action': 'none' }}>
+            {/* Grid de 2 filas (ver scorekeeper.css): arriba los indicadores de fase, abajo los
+                nombres y el límite, alineados contra la línea inferior. */}
             <header class="score-header">
-                <div class="score-reference"><span>{gameState.teams.team_a.score}</span></div>
+                <ScoreReference teamId="team_a" />
+                <ScoreReference teamId="team_b" />
 
                 <TeamName
                     teamId="A"
@@ -44,8 +48,6 @@ const ScoreKeeper = () => {
                     initialName={gameState.teams.team_b.name}
                     onNameChange={(name) => cambiarNombre('team_b', name)}
                 />
-
-                <div class="score-reference"><span>{gameState.teams.team_b.score}</span></div>
             </header>
 
             <Separator orientation="horizontal" />

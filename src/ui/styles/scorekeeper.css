@@ -16,34 +16,59 @@
      su contenido. Atado al alto del viewport, en tablet quedaba relativamente más bajo. */
   height: calc(var(--board-w) * 0.26);
   flex-shrink: 0;
+  /* Dos filas: arriba los indicadores de fase (en las esquinas), abajo los nombres y el límite.
+     `align-items: end` + el padding inferior los despegan de la línea divisoria. */
   display: grid;
-  grid-template-columns: 1fr auto 2fr auto 1fr; /* Ref(A) Name(A) MaxScore Name(B) Ref(B) */
-  align-items: center;
-  justify-content: center;
-  /* Slight background for header area */
-  /* background: rgba(0, 0, 0, 0.2);  */
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "refA  .      refB"
+    "nameA limite nameB";
+  align-items: end;
+  column-gap: calc(var(--board-w) * 0.015);
   border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-  padding: 0 calc(var(--board-w) * 0.021);
+  padding: calc(var(--board-w) * 0.018) calc(var(--board-w) * 0.021) calc(var(--board-w) * 0.03);
 }
 
+.team-name-container.team-A { grid-area: nameA; }
+.team-name-container.team-B { grid-area: nameB; }
+.max-score { grid-area: limite; }
+.score-reference--a { grid-area: refA; justify-self: start; }
+.score-reference--b { grid-area: refB; justify-self: end; }
+
+/* Indicador de fase: píldora con los puntos de la fase en curso y su nombre ("3 BUENAS"). */
 .score-reference {
-  padding: 0;
-  font-weight: bold;
-  opacity: 0.7;
+  display: inline-flex;
+  align-items: baseline;
+  gap: calc(var(--board-w) * 0.012);
+  padding: calc(var(--board-w) * 0.008) calc(var(--board-w) * 0.022);
+  border-radius: 999px;
+  /* Malas: rojo. El tono es el mismo de las cabezas de fósforo, más apagado que `red` puro. */
+  background: rgba(190, 45, 30, 0.85);
   color: whitesmoke;
-  background-color: red;
-  /* Escala con el tablero (≈4.9% de su ancho); el clamp evita extremos en pantallas raras. */
-  width: clamp(0.9rem, calc(var(--board-w) * 0.049), 2rem);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  opacity: 0.5;
-  align-self: start;
-  margin-top: calc(var(--board-w) * 0.021);
-  span {
-    font-size: 60%;
-  }
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Buenas: el mismo ámbar que marca lo activo en el panel de configuraciones. */
+.score-reference--buenas {
+  background: linear-gradient(180deg, #ffd76a 0%, #f2b63c 100%);
+  color: #0c4f2f;
+}
+
+.score-reference__value {
+  font-size: clamp(0.7rem, calc(var(--board-w) * 0.038), 1.6rem);
+  font-weight: 800;
+}
+
+.score-reference__phase {
+  font-size: clamp(0.5rem, calc(var(--board-w) * 0.024), 1rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
 }
 
 .team-name-container {
