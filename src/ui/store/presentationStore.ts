@@ -89,15 +89,16 @@ export const clearZone = (zone: 'A' | 'B', animate = true) => {
 }
 
 /**
- * Llena una zona hasta 15 (malas completas) tomando fósforos del depósito.
+ * Llena una zona hasta `upTo` fósforos (default 15 = malas completas) tomando del depósito.
  * Solo presentación. `animate=false` reposiciona al instante.
  */
-export const fillZone = (zone: 'A' | 'B', animate = true) => {
+export const fillZone = (zone: 'A' | 'B', animate = true, upTo = 15) => {
     setPresentationState(produce((state) => {
         const count = state.matches.filter(m => m.zone === zone && m.slotIndex !== null).length
         const fromStorage = state.matches.filter(m => m.zone === 'storage')
+        const target = Math.min(upTo, 15)
         let i = 0
-        for (let slot = count; slot < 15; slot++) {
+        for (let slot = count; slot < target; slot++) {
             const m = fromStorage[i++]
             if (!m) break
             if (!animate) instantSnap.add(m.id)

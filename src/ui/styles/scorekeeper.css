@@ -12,35 +12,65 @@
 /* New Header Layout */
 .score-header {
   width: 100%;
-  /* flex: 1; */
-  height: 12svh; /* More specific height */
+  /* Proporcional al ANCHO del tablero (26% = el mismo alto que daba 12svh en móvil), igual que
+     su contenido. Atado al alto del viewport, en tablet quedaba relativamente más bajo. */
+  flex-shrink: 0;
+  /* Sin alto fijo: lo define el contenido (que ya escala con --board-w), así no quedan huecos
+     muertos entre los indicadores y los nombres. El aire se controla con row-gap y el padding.
+     El límite ocupa AMBAS filas para quedar centrado en todo el header, no al ras de los nombres. */
   display: grid;
-  grid-template-columns: 1fr auto 2fr auto 1fr; /* Ref(A) Name(A) MaxScore Name(B) Ref(B) */
-  align-items: center;
-  justify-content: center;
-  /* Slight background for header area */
-  /* background: rgba(0, 0, 0, 0.2);  */
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas:
+    "refA  limite refB"
+    "nameA limite nameB";
+  align-items: end;
+  /* Separa los nombres del límite. Al ser el gap del grid (y no un padding por lado) alcanza
+     un solo valor, la simetría queda garantizada y no le come ancho útil a los inputs. */
+  column-gap: calc(var(--board-w) * 0.032);
+  row-gap: calc(var(--board-w) * 0.03);
   border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-  padding: 0 0.5rem;
+  padding: calc(var(--board-w) * 0.022) calc(var(--board-w) * 0.021);
 }
 
+.team-name-container.team-A { grid-area: nameA; }
+.team-name-container.team-B { grid-area: nameB; }
+.score-reference--a { grid-area: refA; justify-self: start; }
+.score-reference--b { grid-area: refB; justify-self: end; }
+
+/* Indicador de fase: píldora con los puntos de la fase en curso y su nombre ("3 BUENAS"). */
 .score-reference {
-  padding: 0;
-  font-weight: bold;
-  opacity: 0.7;
+  display: inline-flex;
+  align-items: baseline;
+  gap: calc(var(--board-w) * 0.012);
+  padding: calc(var(--board-w) * 0.008) calc(var(--board-w) * 0.022);
+  border-radius: 999px;
+  /* Malas: rojo. El tono es el mismo de las cabezas de fósforo, más apagado que `red` puro. */
+  background: rgba(190, 45, 30, 0.85);
   color: whitesmoke;
-  background-color: red;
-  width: 1.15rem;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  opacity: 0.5;
-  align-self: start;
-  margin-top: 0.5rem;
-  span {
-    font-size: 60%;
-  }
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0.8; /* dato de referencia: presente pero sin competir con nombres y límite */
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Buenas: el mismo ámbar que marca lo activo en el panel de configuraciones. */
+.score-reference--buenas {
+  background: linear-gradient(180deg, #ffd76a 0%, #f2b63c 100%);
+  color: #0c4f2f;
+}
+
+.score-reference__value {
+  font-size: clamp(0.7rem, calc(var(--board-w) * 0.038), 1.6rem);
+  font-weight: 800;
+}
+
+.score-reference__phase {
+  font-size: clamp(0.5rem, calc(var(--board-w) * 0.024), 1rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
 }
 
 .team-name-container {
@@ -55,15 +85,21 @@
   width: 100%;
   background: transparent;
   border: none;
-  font-size: 1.2rem;
+  /* ≈5.1% del ancho del tablero (equivale a 1.2rem en móvil, la referencia que se buscaba). */
+  font-size: clamp(0.95rem, calc(var(--board-w) * 0.051), 2.1rem);
   text-align: center;
   font-weight: 600;
   color: whitesmoke;
   outline: none;
   font-family: inherit;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.05em; /* relativo a la fuente: acompaña el escalado */
 }
+
+/* Los nombres arrancan del lado del límite: el de la izquierda termina contra él y el de la
+   derecha empieza en él, así crecen hacia afuera en vez de alejarse del centro. */
+.team-A .team-name-input { text-align: right; }
+.team-B .team-name-input { text-align: left; }
 
 .team-name-input::placeholder {
   color: rgba(245, 245, 245, 0.814);
@@ -72,29 +108,38 @@
 }
 
 .max-score {
-  font-size: 2.5rem; /* Prominent size */
+  /* Abarca las dos filas del header y se centra en ellas (no se alinea con los nombres). */
+  grid-area: limite;
+  align-self: center;
+  line-height: 1; /* sin interlineado propio, para no estirar el header */
+  /* ≈10.7% del ancho del tablero (equivale a 2.5rem en móvil). */
+  font-size: clamp(1.75rem, calc(var(--board-w) * 0.107), 4.25rem);
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.15); /* Subtle watermark style */
+  color: rgba(255, 255, 255, 0.3); /* Subtle watermark style */
   text-align: center;
   user-select: none;
 }
 
-/* Main Points Area */
+/* Main Points Area: toma todo el alto que deja el depósito (que sí tiene alto proporcional). */
 .points {
   width: 100%;
-  flex: 10;
+  flex: 1;
+  min-height: 0;
   display: flex;
   position: relative;
 }
 
 .matchstickStorage {
   /* background: rgba(255, 235, 205, 0.151); */
-  width: 100%;
-  flex: 1.5;
+  /* El tamaño se lo da la fila inferior (.bottom-bar en actionButtons.css), que reparte el
+     espacio entre los botones de acción y el depósito. */
   position: relative;
 }
 
-section {
+/* Zonas de puntaje del tablero (#section-A / #section-B). El selector va acotado a `.points`:
+   como selector de tipo suelto alcanzaba a CUALQUIER <section> de la app (p.ej. las secciones del
+   panel de configuraciones), que heredaban space-around/align-items y quedaban deformadas. */
+.points section {
   flex: 1;
   height: 100%;
   min-width: 30%;

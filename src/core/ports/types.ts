@@ -9,6 +9,7 @@
 // Los tipos base `TeamId`, `Phase` y `Limit` son el contrato compartido del
 // dominio: se IMPORTAN desde `@/core/domain/constants` y NO se redefinen acá.
 import type { TeamId, Phase, Limit } from '@/core/domain/constants'
+import type { ScoreHistoryEntry } from '@/core/domain/history'
 
 // Comandos serializables que la UI (o, a futuro, el backend) despacha al core.
 // Cada variante es un objeto plano discriminado por `type`.
@@ -30,14 +31,17 @@ export interface GameSnapshot {
   limit: Limit
   winner: TeamId | null
   finished: boolean
+  // Bitácora de anotaciones que cambiaron el score (con timestamp). La UI la agrupa por
+  // cercanía temporal con `groupByTimeGap` para reconstruir las "manos".
+  history: ScoreHistoryEntry[]
 }
 
 // Listener que recibe cada nuevo snapshot cuando el estado del core cambia.
 export type GameStateListener = (state: GameSnapshot) => void
 
-// Razón por la que el core decide resetear una zona. Union extensible (OCP): agregar 'match-end',
-// etc., es ADITIVO y no obliga a modificar las reglas ni el engine existentes.
-export type ResetReason = 'enter-buenas' | 'exit-buenas'
+// Razón por la que el core decide resetear una zona. Union extensible (OCP): agregar una razón
+// nueva es ADITIVO y no obliga a modificar las reglas ni el engine existentes.
+export type ResetReason = 'enter-buenas' | 'exit-buenas' | 'match-reset'
 
 // Eventos de dominio que el core emite hacia afuera (UI hoy, backend mañana). Serializables,
 // igual que Command/GameSnapshot: despachar local hoy = enviar por WebSocket mañana.

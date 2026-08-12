@@ -1,7 +1,11 @@
 .matchstick {
   display: block;
   position: absolute;
-  filter: drop-shadow(0.6svh 0.6svh .5svh rgba(0, 0, 0, .7));
+  /* La sombra escala con el tablero, igual que el fósforo (antes usaba svh: en pantallas
+     anchas quedaba desproporcionada respecto al fósforo, que escala con el ancho). */
+  filter: drop-shadow(
+    calc(var(--board-w) * 0.013) calc(var(--board-w) * 0.013)
+    calc(var(--board-w) * 0.011) rgba(0, 0, 0, .7));
 
   img {
     position: relative;

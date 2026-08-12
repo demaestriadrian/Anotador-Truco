@@ -43,4 +43,9 @@ export class Team {
   reset(): void {
     this._score = 0;
   }
+
+  // Restaura el puntaje desde un estado persistido, con clamp a >= 0 (la fase se deriva sola).
+  restore(score: number): void {
+    this._score = Math.max(0, score);
+  }
 }

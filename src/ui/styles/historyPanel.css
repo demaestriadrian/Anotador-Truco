@@ -1,0 +1,124 @@
+/* Panel de historial: reusa el drawer de settingsPanel.css (.settings-card, header fijo) y agrega
+   solo lo propio de la lista de grupos. El overlay/z-index viven en settingsPanel.css. */
+
+/* Barra de agrupación, fija bajo el header: tocar una opción re-arma los grupos de abajo. */
+.history-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.history-toolbar__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(245, 245, 245, 0.5);
+}
+
+.history-toolbar .settings-segmented__option {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+/* El cuerpo del drawer casi no tiene padding lateral (lo ponen las filas con `--settings-inset`),
+   así que el contenido del historial se lo aplica por su cuenta para quedar alineado con ellas. */
+.history-empty {
+  margin: 0 var(--settings-inset);
+  padding: 1.5rem 0;
+  text-align: center;
+  font-size: 0.95rem;
+  color: rgba(245, 245, 245, 0.7);
+}
+
+.history-groups {
+  margin: 0 var(--settings-inset);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Un grupo = anotaciones cercanas en el tiempo (una "mano"). */
+.history-group {
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.history-group__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.history-group__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(245, 245, 245, 0.75);
+}
+
+/* Neto del grupo por equipo (p.ej. "NOSOTROS +2"). */
+.history-group__net {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffd76a;
+  text-align: right;
+}
+
+.history-group__entries {
+  list-style: none;
+  margin: 0;
+  padding: 0.4rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.history-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.history-entry__delta {
+  flex-shrink: 0;
+  width: 2rem;
+  padding: 0.1rem 0;
+  border-radius: 0.35rem;
+  background: rgba(255, 215, 106, 0.2);
+  color: #ffd76a;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Quitar un punto se distingue del sumar (bitácora fiel: el −1 también se registra). */
+.history-entry__delta--negative {
+  background: rgba(255, 120, 100, 0.18);
+  color: #ff9d8d;
+}
+
+.history-entry__team {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.history-entry__time {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 245, 0.55);
+}

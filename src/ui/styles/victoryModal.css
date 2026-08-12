@@ -54,10 +54,6 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-.victory-card__close:active {
-  transform: scale(0.92);
-}
-
 .victory-card__eyebrow {
   margin: 0;
   font-size: 0.85rem;
@@ -95,8 +91,9 @@
   transition: transform 0.08s ease, filter 0.15s ease, background-color 0.15s ease;
 }
 
+/* Botón ancho: escala más suave que el default (ver `--press-scale-wide`). */
 .victory-btn:active {
-  transform: scale(0.97);
+  transform: scale(var(--press-scale-wide));
 }
 
 /* Acción principal: empezar una partida nueva. */

@@ -1,5 +1,8 @@
 import ScoreKeeper from './ScoreKeeper'
 import VictoryModal from './VictoryModal'
+import SettingsPanel from './settings/SettingsPanel'
+import HistoryPanel from './history/HistoryPanel'
+import ConfirmDialog from './ConfirmDialog'
 
 const App = () => {
     return (
@@ -9,6 +12,9 @@ const App = () => {
                 <ScoreKeeper />
             </main>
             <VictoryModal />
+            <SettingsPanel />
+            <HistoryPanel />
+            <ConfirmDialog />
         </>
     )
 }

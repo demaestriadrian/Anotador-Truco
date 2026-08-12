@@ -2,10 +2,13 @@ import { gameState, cambiarNombre } from '@/infrastructure/adapters/solidGameCon
 import { createScoreboardGestures } from '@/ui/hooks/createScoreboardGestures'
 import { createCoreResetBridge } from '@/ui/hooks/createCoreResetBridge'
 import { createMatchLifecycleBridge } from '@/ui/hooks/createMatchLifecycleBridge'
+import { createMatchRestoreSync } from '@/ui/hooks/createMatchRestoreSync'
 import PointSection from './PointSection'
 import MatchStickStorage from './MatchStickStorage'
 import TeamName from './TeamName'
 import Separator from './Separator'
+import ScoreReference from './ScoreReference'
+import { QuickActionButton, SettingsButton } from './ActionButtons'
 
 const ScoreKeeper = () => {
     let rootRef: HTMLDivElement | undefined
@@ -19,14 +22,21 @@ const ScoreKeeper = () => {
     // Reacciona al ciclo de vida de la partida (victoria / deshacer / finalización).
     createMatchLifecycleBridge()
 
+    // Coloca los fósforos de una partida restaurada por el core (persistencia) apenas se puede medir.
+    createMatchRestoreSync()
+
     return (
         <div class="scorekeeper" ref={rootRef} style={{ 'touch-action': 'none' }}>
+            {/* Grid de 2 filas (ver scorekeeper.css): arriba los indicadores de fase, abajo los
+                nombres y el límite, alineados contra la línea inferior. */}
             <header class="score-header">
-                <div class="score-reference"><span>{gameState.teams.team_a.score}</span></div>
+                <ScoreReference teamId="team_a" />
+                <ScoreReference teamId="team_b" />
 
                 <TeamName
                     teamId="A"
                     placeholder="NOSOTROS"
+                    initialName={gameState.teams.team_a.name}
                     onNameChange={(name) => cambiarNombre('team_a', name)}
                 />
 
@@ -35,10 +45,9 @@ const ScoreKeeper = () => {
                 <TeamName
                     teamId="B"
                     placeholder="ELLOS"
+                    initialName={gameState.teams.team_b.name}
                     onNameChange={(name) => cambiarNombre('team_b', name)}
                 />
-
-                <div class="score-reference"><span>{gameState.teams.team_b.score}</span></div>
             </header>
 
             <Separator orientation="horizontal" />
@@ -48,7 +57,13 @@ const ScoreKeeper = () => {
                 <Separator orientation="vertical" />
                 <PointSection team="B" />
             </div>
-            <MatchStickStorage />
+            {/* Fila inferior: acción rápida | depósito | configuraciones. En pantallas grandes
+                los botones se reposicionan (CSS) arriba y el depósito recupera todo el ancho. */}
+            <div class="bottom-bar">
+                <QuickActionButton />
+                <MatchStickStorage />
+                <SettingsButton />
+            </div>
         </div>
     )
 }
