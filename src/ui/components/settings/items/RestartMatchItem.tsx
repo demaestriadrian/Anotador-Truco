@@ -10,6 +10,7 @@ const RestartMatchItem = () => (
         label="Reiniciar el juego"
         hint="Borra el puntaje y los fósforos"
         danger
+        onActivate={restartMatchWithConfirm}
     >
         <button class="settings-btn settings-btn--danger" onClick={restartMatchWithConfirm}>
             Reiniciar

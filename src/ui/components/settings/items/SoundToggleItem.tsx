@@ -4,7 +4,7 @@ import SettingsRow from '../SettingsRow'
 
 // Ítem: activar/desactivar los efectos de sonido (persistido en settings).
 const SoundToggleItem = () => (
-    <SettingsRow icon={Volume2} label="Sonido" hint="Efectos al anotar">
+    <SettingsRow icon={Volume2} label="Sonido" hint="Efectos al anotar" onActivate={toggleSound}>
         <button
             class="settings-toggle"
             classList={{ 'settings-toggle--on': settings.soundEnabled }}

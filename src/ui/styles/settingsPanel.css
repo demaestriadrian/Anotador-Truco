@@ -52,6 +52,12 @@
 /* Drawer: panel lateral de altura completa que entra deslizando desde la derecha.
    Sin padding propio: el header queda fijo y solo scrollea el cuerpo. */
 .settings-card {
+  /* Padding lateral de las filas. El cuerpo del drawer casi no tiene padding propio: lo pone
+     cada fila, así el fondo que se pinta al tocarla es MÁS ANCHO que su contenido y queda como
+     un marco redondeado alrededor del ítem en vez de ir pegado al texto.
+     El texto no se mueve: padding del cuerpo + este inset = el 1.25rem de siempre, y el título
+     de sección usa el mismo inset (como margen, porque no se pinta) para no desalinearse. */
+  --settings-inset: 0.75rem;
   width: min(85vw, 24rem);
   height: 100%;
   border-right: none;
@@ -117,7 +123,7 @@
 .settings-card__items {
   flex: 1;
   overflow-y: auto;
-  padding: 0.5rem 1.25rem 1.5rem;
+  padding: 0.5rem 0.5rem 1.5rem;
 }
 
 /* ─── Secciones ─── */
@@ -131,7 +137,7 @@
 }
 
 .settings-section__title {
-  margin: 0 0 0.15rem;
+  margin: 0 var(--settings-inset) 0.15rem;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -142,18 +148,31 @@
 /* ─── Fila de configuración (primitiva SettingsRow) ─── */
 
 .settings-row {
+  position: relative;   /* ancla del separador (::after) */
   width: 100%;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.7rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.7rem var(--settings-inset);
+  border-radius: 0.6rem;
   text-align: left;
   color: whitesmoke;
 }
 
-.settings-section .settings-row:last-child {
-  border-bottom: none;
+/* El separador se dibuja con un ::after alineado con el TEXTO, no con el borde de la fila: la
+   fila ahora se extiende hacia los costados para poder pintar el marco redondeado, pero la
+   línea tiene que seguir donde estaba (si fuese `border-bottom` se estiraría con ella). */
+.settings-row::after {
+  content: '';
+  position: absolute;
+  right: var(--settings-inset);
+  bottom: 0;
+  left: var(--settings-inset);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-section .settings-row:last-child::after {
+  content: none;
 }
 
 .settings-row__icon {
@@ -207,21 +226,32 @@
 
 /* Fila navegable: toda la fila es el botón (afordancia con chevron). */
 .settings-row--button {
-  border-left: none;
-  border-right: none;
-  border-top: none;
+  border: none;
   background: transparent;
   font-family: inherit;
+}
+
+/* Filas accionables: la navegable (que ES un botón) y las que reciben `onActivate` y accionan
+   su control al tocarlas. Mismo feedback en las dos, para que se sientan igual de tocables. */
+.settings-row--button,
+.settings-row--activable {
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.08s ease;
 }
 
-.settings-row--button:hover {
+.settings-row--button:hover,
+.settings-row--activable:hover {
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Fila ancha: escala más suave que el default (ver `--press-scale-wide`). */
-.settings-row--button:active {
+/* Al tocar: marco redondeado + escala suave (las filas son anchas; ver `--press-scale-wide`).
+   El fondo se declara acá y no solo en :hover porque en táctil no hay hover — si dependiera de
+   él, el dedo no pintaría nada.
+   `:active` también matchea a los ANCESTROS del elemento presionado, así que sin el `:not` tocar
+   el control encendería además la fila entera (dos feedbacks encimados). */
+.settings-row--button:active,
+.settings-row--activable:active:not(:has(.settings-row__control :active)) {
+  background: rgba(255, 255, 255, 0.1);
   transform: scale(var(--press-scale-wide));
 }
 

@@ -15,6 +15,13 @@ interface SettingsRowProps {
     hint?: string            // texto secundario opcional
     danger?: boolean         // tiñe el ícono (zona de peligro)
     children?: JSX.Element   // el control (switch / segmented / botón)
+    /**
+     * Acción de la FILA ENTERA: tocar el ícono, el label o el hueco vacío dispara lo mismo que
+     * el control (igual que "Ver historial"). El control sigue siendo la afordancia visible;
+     * esto solo agranda el área tocable, que en móvil es la diferencia entre acertar y no.
+     * Cada ítem decide qué significa "activar" (un switch alterna, un segmented avanza opción).
+     */
+    onActivate?: () => void
 }
 
 const RowContent = (props: SettingsRowProps) => (
@@ -33,7 +40,19 @@ const RowContent = (props: SettingsRowProps) => (
 )
 
 const SettingsRow = (props: SettingsRowProps) => (
-    <div class="settings-row" classList={{ 'settings-row--danger': props.danger }}>
+    <div
+        class="settings-row"
+        classList={{
+            'settings-row--danger': props.danger,
+            'settings-row--activable': props.onActivate !== undefined,
+        }}
+        // Los clicks DENTRO del control ya los maneja el control. Si además corriera `onActivate`,
+        // el switch se alternaría dos veces por toque y volvería a su estado original.
+        onClick={(e) => {
+            if ((e.target as Element).closest('.settings-row__control')) return
+            props.onActivate?.()
+        }}
+    >
         <RowContent {...props} />
     </div>
 )
