@@ -105,10 +105,6 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-.settings-card__close:active {
-  transform: scale(0.92);
-}
-
 .settings-card__title {
   margin: 0;
   font-size: 1.05rem;
@@ -217,11 +213,16 @@
   background: transparent;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, transform 0.08s ease;
 }
 
 .settings-row--button:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+/* Fila ancha: escala más suave que el default (ver `--press-scale-wide`). */
+.settings-row--button:active {
+  transform: scale(var(--press-scale-wide));
 }
 
 .settings-row__chevron {
@@ -244,10 +245,6 @@
 
 .settings-btn:hover {
   background: rgba(255, 255, 255, 0.2);
-}
-
-.settings-btn:active {
-  transform: scale(0.96);
 }
 
 /* Botón con ícono Lucide + texto. */
@@ -276,7 +273,7 @@
   border-radius: 1rem;
   background: rgba(0, 0, 0, 0.35);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.08s ease;
 }
 
 .settings-toggle__thumb {
@@ -316,7 +313,7 @@
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, transform 0.08s ease;
 }
 
 .settings-segmented__option--active {
@@ -349,4 +346,9 @@
 .confirm-card__actions .settings-btn {
   flex: 1;
   padding: 0.75rem 1rem;
+}
+
+/* Botones anchos: escala más suave que el default (ver `--press-scale-wide`). */
+.confirm-card__actions .settings-btn:active {
+  transform: scale(var(--press-scale-wide));
 }

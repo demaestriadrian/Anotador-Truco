@@ -11,6 +11,10 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  user-select: none;
+  input {
+    user-select: text;
+  }
 }
 
 :root {
@@ -26,6 +30,12 @@
      Se define en :root (y no como container query) para que también la puedan usar los botones
      `position: fixed` de escritorio, que se posicionan respecto al viewport. */
   --board-w: min(100svw, calc(100svh * 9 / 16));
+
+  /* Escala al presionar (ver "feedback táctil" al final del archivo).
+     `wide` es para elementos anchos —filas y botones full-width—: un 0.9 ahí
+     desplaza los bordes varios píxeles y se lee como un salto, no como un click. */
+  --press-scale: 0.9;
+  --press-scale-wide: 0.97;
 }
 
 html {
@@ -58,4 +68,38 @@ body {
 #root {
   width: 100%;
   height: 100%;
+}
+
+/* ── Feedback táctil unificado ──────────────────────────────────────────────
+   En móvil, al tocar cualquier elemento con acción el navegador pinta encima una
+   "estela" celeste (`-webkit-tap-highlight-color`) y además deja el foco marcado
+   después del tap. Apagamos las dos cosas y damos el feedback nosotros: un scale
+   al presionar, igual en todos los botones de la app.
+
+   Va DESPUÉS de los @import para que gane a las hojas importadas; para los
+   selectores de clase (`.action-btn:active`, …) la especificidad manda, así que
+   esas hojas no redefinen el `:active` y solo aportan overrides puntuales. */
+
+/* La estela se hereda, así que declararla en la raíz alcanza para TODO lo tocable: botones,
+   inputs y también los divs del tablero que responden a pointer events. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mantener el dedo sobre un botón no abre el menú de long-press (que además pinta el elemento).
+   La selección de texto ya la corta el `user-select: none` global de arriba. */
+button,
+[role='button'] {
+  -webkit-touch-callout: none;
+  transition: transform 0.08s ease;
+}
+
+/* Sin anillo de foco al tocar/clickear; se conserva para navegación por teclado. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+button:active,
+[role='button']:active {
+  transform: scale(var(--press-scale));
 }
