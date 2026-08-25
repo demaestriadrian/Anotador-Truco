@@ -17,6 +17,35 @@ Es una SPA puramente cliente (sin backend por ahora).
 > Estas reglas provienen de la configuración previa del proyecto (`.agent/rules/`), ahora
 > consolidadas acá tras unificar el trabajo en Claude.
 
+## 🔖 Versionado (regla obligatoria)
+
+**Antes de cada `git commit` hay que actualizar `version` en [`package.json`](package.json).**
+La app expone esa versión en la UI y en la consola, así que un commit sin bump deja builds
+distintas anunciándose con el mismo número.
+
+**Cuándo bumpear**: apenas termina el cambio y **antes** de commitear, con el cambio todavía sin
+commitear. El bump viaja **en el mismo commit** que el cambio que lo justifica — nunca en un
+commit aparte "de versión", ni después.
+
+**Cuánto bumpear** (SemVer `MAJOR.MINOR.PATCH`), según el tipo del commit:
+
+| Commit | Bump | Ejemplo |
+| :--- | :--- | :--- |
+| `fix` / `style` / `refactor` / `chore` / `docs` | **PATCH** | `0.6.0` → `0.6.1` |
+| `feat` (funcionalidad nueva) | **MINOR** | `0.6.1` → `0.7.0` |
+| Hito del roadmap o cambio que rompe compatibilidad | **MAJOR** | `0.7.0` → `1.0.0` |
+
+Si un commit mezcla varios tipos, manda el más alto. Mientras siga en `0.x` la app es pre-1.0:
+`1.0.0` queda reservado para cuando cierre la Fase A del [`ROADMAP.md`](ROADMAP.md) (marcador
+local completo, con tests de dominio).
+
+**De dónde sale lo que se muestra**: [`vite.config.ts`](vite.config.ts) inyecta con `define` un
+`__APP_BUILD__` con la versión del `package.json` + rama, commit corto y fecha de compilación
+(en Cloudflare Pages los toma de `CF_PAGES_BRANCH` / `CF_PAGES_COMMIT_SHA`, que es lo único que
+hay ahí). [`src/appVersion.ts`](src/appVersion.ts) lo lee y lo publica en dos lados: el pie del
+panel de configuraciones y el objeto global `anotador` de la consola del navegador — así se sabe
+si lo que se está mirando es la build de `main`, la de `dev` o la local.
+
 ## 🚀 Stack tecnológico
 
 | Área | Tecnología |

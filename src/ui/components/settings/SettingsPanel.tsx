@@ -2,6 +2,7 @@ import { Show, For } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import X from 'lucide-solid/icons/x'
 import { settingsOpen, closeSettings } from '@/ui/store/settingsPanelStore'
+import { APP_VERSION, buildLabel } from '@/appVersion'
 import { SETTINGS_SECTIONS, SETTINGS_ITEMS } from './settingsItems'
 
 /**
@@ -40,6 +41,12 @@ const SettingsPanel = () => (
                         }}
                     </For>
                 </div>
+
+                {/* Pie: la versión, discreta. El detalle completo (rama, commit, fecha) va en el
+                    title y en la consola —ver `exposeVersion`—, para no ensuciar el panel. */}
+                <footer class="settings-card__footer">
+                    <span title={buildLabel()}>v{APP_VERSION}</span>
+                </footer>
             </div>
         </div>
     </Show>
