@@ -57,7 +57,11 @@ la visión a futuro.
 | `Lit` | `7532ee5` | Migración a Lit |
 | `SolidJS` | `319ba4a` | Refactor a SolidJS (base de trabajo) |
 | `SolidJS-manual` | `f02cb2f` | SolidJS + simplificaciones manuales (2 commits adelante) |
-| **`SolidJS-Claude`** | `319ba4a` | **Rama activa de trabajo con Claude** (creada desde `SolidJS`) |
+| **`SolidJS-Claude`** | `319ba4a` | Rama de trabajo con Claude (creada desde `SolidJS`) |
+
+> ⚠️ **Estas ramas ya no existen como ramas.** Se archivaron como tags `archivo/<rama>` al
+> concentrar el desarrollo en `main` + `dev` (la rama de trabajo actual es **`dev`**). Los commits
+> siguen intactos: `git branch <rama> archivo/<rama>` para recuperar cualquiera.
 
 ## 🪜 Resumen de la evolución de stack
 
@@ -66,7 +70,11 @@ Vanilla HTML/CSS  →  TypeScript + Vite  →  GSAP (drag & drop)  →  Arquitec
         →  React + Zustand  →  Lit  →  SolidJS  ← (estado actual)
 ```
 
-## ✅ Estado actual (rama `SolidJS-Claude`)
+## ✅ Estado al momento de este historial (rama `SolidJS-Claude`)
+
+> Snapshot histórico, **no** el estado de hoy: desde entonces llegaron el core hexagonal en uso,
+> la PWA, la persistencia y el panel de configuraciones. Para el estado actual ver
+> [`CLAUDE.md`](./CLAUDE.md) y [`ROADMAP.md`](./ROADMAP.md).
 
 - App funcional en **SolidJS** con drag & drop de fósforos y store reactivo (`gameStore.ts`).
 - Animaciones con **GSAP Flip**; arrastre con **GSAP Draggable**.

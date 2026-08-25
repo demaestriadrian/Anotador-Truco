@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guía para Claude Code al trabajar en este repositorio. Rama de trabajo: **`SolidJS-Claude`**.
+Guía para Claude Code al trabajar en este repositorio. **Rama de trabajo: `dev`.**
 
 ## 🎴 Qué es el proyecto
 
@@ -16,6 +16,20 @@ Es una SPA puramente cliente (sin backend por ahora).
 
 > Estas reglas provienen de la configuración previa del proyecto (`.agent/rules/`), ahora
 > consolidadas acá tras unificar el trabajo en Claude.
+
+## 🌿 Ramas (regla obligatoria)
+
+Solo existen dos: **`dev`** —donde se trabaja y se commitea— y **`main`**, que es lo publicado y
+se actualiza **mergeando `dev`**. No commitear directo en `main`.
+
+Las ramas de la evolución del stack (`GSAP`, `hexagonal-architecture`, `react`, `Lit`, `SolidJS`,
+`SolidJS-Claude`, `SolidJS-Core`, `SolidJS-manual`, `0.1`, `0.2`, `to-TypeScript`) se archivaron
+como tags **`archivo/<rama>`** y se borraron. Los commits siguen intactos —incluidos los que nunca
+llegaron a `main`—; para volver a mirar una:
+
+```bash
+git branch <rama> archivo/<rama>
+```
 
 ## 🔖 Versionado (regla obligatoria)
 
