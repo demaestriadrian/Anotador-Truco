@@ -23,11 +23,15 @@ const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`)
  * dos funciones puras del dominio: `groupByTimeGap` arma las "manos" según el umbral configurable
  * y `collapseRuns` fusiona las anotaciones consecutivas del mismo equipo y signo (+3 en vez de
  * +1 +1 +1). Al ser derivación, cambiar el umbral re-arma todo al instante sin tocar los datos.
+ *
+ * Se muestra de lo más nuevo a lo más viejo (manos y tramos), para ver lo último sin scrollear.
+ * El número de mano se calcula ANTES de invertir: sigue siendo cronológico (la última es la mayor).
  */
 const HistoryPanel = () => {
     const groups = createMemo(() =>
         groupByTimeGap(gameState.history, settings.historyGapSeconds * 1000)
-            .map(group => ({ start: group.start, runs: collapseRuns(group.entries) }))
+            .map((group, i) => ({ number: i + 1, start: group.start, runs: collapseRuns(group.entries).reverse() }))
+            .reverse()
     )
 
     return (
@@ -50,11 +54,11 @@ const HistoryPanel = () => {
                         >
                             <div class="history-groups">
                                 <For each={groups()}>
-                                    {(group, index) => (
+                                    {(group) => (
                                         <div class="history-group">
                                             <div class="history-group__header">
                                                 <span class="history-group__title">
-                                                    Mano {index() + 1} · {hora(group.start)}
+                                                    Mano {group.number} · {hora(group.start)}
                                                 </span>
                                                 <span class="history-group__net">
                                                     <For each={(['team_a', 'team_b'] as const).filter(id => netOf(group.runs, id) !== 0)}>
